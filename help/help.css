@@ -5,15 +5,15 @@
 :root {
   --help-bg: #ffffff;
   --help-bg-secondary: #f8f9fa;
-  --help-text: #1a1a2e;
+  --help-text: #1a1a1a;
   --help-text-muted: #6b7280;
   --help-border: #e5e7eb;
   --help-accent: #e8791d;
   --help-accent-hover: #d06a15;
   --help-sidebar-bg: #f3f4f6;
   --help-sidebar-w: 280px;
-  --help-code-bg: #1e1e2e;
-  --help-code-text: #cdd6f4;
+  --help-code-bg: #1a1a1a;
+  --help-code-text: #d4d4d4;
   --help-header-bg: #ffffff;
   --help-shadow: 0 1px 3px rgba(0,0,0,0.08);
   --help-link: #e8791d;
@@ -28,23 +28,23 @@
 }
 
 [data-theme="dark"] {
-  --help-bg: #11111b;
-  --help-bg-secondary: #181825;
-  --help-text: #cdd6f4;
-  --help-text-muted: #7f849c;
-  --help-border: #313244;
-  --help-sidebar-bg: #181825;
-  --help-header-bg: #181825;
-  --help-shadow: 0 1px 3px rgba(0,0,0,0.3);
-  --help-link: #fab387;
-  --help-search-bg: #1e1e2e;
-  --help-toc-bg: #181825;
-  --help-toc-border: #313244;
-  --help-table-stripe: #181825;
-  --help-kbd-bg: #313244;
-  --help-kbd-border: #45475a;
-  --help-scrollbar: #45475a;
-  --help-scrollbar-hover: #585b70;
+  --help-bg: #0e0e0e;
+  --help-bg-secondary: #161616;
+  --help-text: #d4d4d4;
+  --help-text-muted: #737373;
+  --help-border: #262626;
+  --help-sidebar-bg: #141414;
+  --help-header-bg: #141414;
+  --help-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  --help-link: #e8791d;
+  --help-search-bg: #1a1a1a;
+  --help-toc-bg: #161616;
+  --help-toc-border: #262626;
+  --help-table-stripe: #161616;
+  --help-kbd-bg: #262626;
+  --help-kbd-border: #333333;
+  --help-scrollbar: #333333;
+  --help-scrollbar-hover: #4a4a4a;
 }
 
 /* ─── Reset & Base ─────────────────────────────────────────── */
