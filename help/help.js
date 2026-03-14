@@ -233,11 +233,15 @@
   var tocObserver = null;
   var tocLinks = [];  // cached for scroll spy
 
+  var STICKY_OFFSET = 92; // header (56) + toc bar (36)
+
   function buildToc() {
     if (tocObserver) { tocObserver.disconnect(); tocObserver = null; }
     tocLinks = [];
+    activeTocLink = null;
+    scrollSpyLocked = false;
 
-    var headings = $article.querySelectorAll('h2, h3');
+    var headings = $article.querySelectorAll('h2');
     if (headings.length < 2) {
       $toc.classList.remove('active');
       $toc.innerHTML = '';
@@ -253,8 +257,7 @@
       a.addEventListener('click', function (e) {
         e.preventDefault();
         setActiveTocLink(a);
-        var target = document.getElementById(h.id);
-        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        scrollToHeading(h.id);
       });
       inner.appendChild(a);
       tocLinks.push(a);
@@ -268,6 +271,17 @@
   }
 
   var activeTocLink = null;
+  var scrollSpyLocked = false;
+
+  function scrollToHeading(id) {
+    var target = document.getElementById(id);
+    if (!target) return;
+    // Lock scroll spy during programmatic scroll to prevent flickering
+    scrollSpyLocked = true;
+    var top = target.getBoundingClientRect().top + window.scrollY - STICKY_OFFSET - 8;
+    window.scrollTo({ top: top, behavior: 'smooth' });
+    setTimeout(function () { scrollSpyLocked = false; }, 600);
+  }
 
   function setActiveTocLink(link) {
     if (activeTocLink === link) return;
@@ -288,13 +302,14 @@
     if (!tocLinks.length) return;
 
     tocObserver = new IntersectionObserver(function (entries) {
+      if (scrollSpyLocked) return;
       entries.forEach(function (entry) {
         if (entry.isIntersecting) {
           var link = $toc.querySelector('a[href="#' + entry.target.id + '"]');
           if (link) setActiveTocLink(link);
         }
       });
-    }, { rootMargin: '-100px 0px -70% 0px' });
+    }, { rootMargin: '-' + STICKY_OFFSET + 'px 0px -60% 0px' });
 
     headings.forEach(function (h) { tocObserver.observe(h); });
   }
