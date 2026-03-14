@@ -54,8 +54,8 @@
         }
         $title.textContent = config.title || 'Help';
         document.title = config.title || 'Help';
-        buildNav(config.chapters, $nav, null);
-        flattenChapters(config.chapters, null);
+        buildNav(config.chapters, $nav);
+        flattenChapters(config.chapters);
         preloadChapters();
         navigateFromHash();
         $footer.innerHTML = 'made by <a href="https://leminkozey.me" target="_blank">leminkozey</a>' +
@@ -68,7 +68,7 @@
 
   // ─── Build Sidebar Nav ─────────────────────────────────────
 
-  function buildNav(items, parent, parentId) {
+  function buildNav(items, parent) {
     items.forEach(function (item) {
       var li = document.createElement('li');
 
@@ -76,22 +76,30 @@
         var btn = document.createElement('button');
         btn.className = 'help-nav-item help-nav-group-toggle';
         btn.innerHTML = '<svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M4 2l4 4-4 4"/></svg> ' + escapeHtml(item.title);
-        btn.addEventListener('click', function () {
-          btn.classList.toggle('expanded');
-          ul.classList.toggle('expanded');
-        });
-        li.appendChild(btn);
-
         if (item.file) {
           btn.dataset.id = item.id;
+          btn.addEventListener('click', function (e) {
+            // Chevron click: only toggle. Text click: toggle + navigate.
+            if (e.target.closest('.chevron')) {
+              btn.classList.toggle('expanded');
+              ul.classList.toggle('expanded');
+            } else {
+              btn.classList.toggle('expanded');
+              ul.classList.toggle('expanded');
+              navigate(item.id);
+            }
+          });
+        } else {
           btn.addEventListener('click', function () {
-            navigate(item.id);
+            btn.classList.toggle('expanded');
+            ul.classList.toggle('expanded');
           });
         }
+        li.appendChild(btn);
 
         var ul = document.createElement('ul');
         ul.className = 'help-nav-children';
-        buildNav(item.children, ul, item.id);
+        buildNav(item.children, ul);
         li.appendChild(ul);
       } else {
         var a = document.createElement('a');
@@ -112,13 +120,13 @@
 
   // ─── Flatten chapters for ordering ─────────────────────────
 
-  function flattenChapters(items, parentId) {
+  function flattenChapters(items) {
     items.forEach(function (item) {
       if (item.file) {
-        chapters.push({ id: item.id, title: item.title, file: item.file, parentId: parentId });
+        chapters.push({ id: item.id, title: item.title, file: item.file });
       }
       if (item.children) {
-        flattenChapters(item.children, item.id);
+        flattenChapters(item.children);
       }
     });
   }
@@ -137,7 +145,7 @@
 
   function setActiveNav(id) {
     if (activeNavEl) activeNavEl.classList.remove('active');
-    var el = $nav.querySelector('[data-id="' + id + '"]');
+    var el = $nav.querySelector('[data-id="' + CSS.escape(id) + '"]');
     if (el) {
       el.classList.add('active');
       expandParents(el);
@@ -165,6 +173,9 @@
         buildToc();
         buildPrevNext();
         window.scrollTo(0, 0);
+      })
+      .catch(function () {
+        $article.innerHTML = '<p>Failed to load chapter.</p>';
       });
   }
 
@@ -199,15 +210,21 @@
   function renderMarkdown(md) {
     $article.innerHTML = marked.parse(md);
 
-    // Add IDs to headings for TOC links
+    // Add IDs to headings for TOC links (deduplicate)
+    var usedIds = {};
     var headings = $article.querySelectorAll('h1, h2, h3, h4');
     headings.forEach(function (h) {
       if (!h.id) {
-        h.id = h.textContent
+        var base = h.textContent
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, '-')
           .replace(/^-|-$/g, '');
+        var id = base;
+        var n = 1;
+        while (usedIds[id]) { id = base + '-' + n++; }
+        h.id = id;
       }
+      usedIds[h.id] = true;
     });
 
     // Add copy buttons to code blocks
@@ -305,7 +322,7 @@
       if (scrollSpyLocked) return;
       entries.forEach(function (entry) {
         if (entry.isIntersecting) {
-          var link = $toc.querySelector('a[href="#' + entry.target.id + '"]');
+          var link = $toc.querySelector('a[href="#' + CSS.escape(entry.target.id) + '"]');
           if (link) setActiveTocLink(link);
         }
       });

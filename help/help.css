@@ -9,7 +9,6 @@
   --help-text-muted: #6b7280;
   --help-border: #e5e7eb;
   --help-accent: #e8791d;
-  --help-accent-hover: #d06a15;
   --help-sidebar-bg: #f3f4f6;
   --help-sidebar-w: 280px;
   --help-code-bg: #f5f5f5;
@@ -322,7 +321,6 @@ body {
 .help-toc-bar-inner {
   display: inline-flex;
   align-items: center;
-  gap: 0;
   height: 36px;
   white-space: nowrap;
 }
