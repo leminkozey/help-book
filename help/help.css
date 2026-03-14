@@ -43,6 +43,8 @@
   --help-table-stripe: #161616;
   --help-kbd-bg: #262626;
   --help-kbd-border: #333333;
+  --help-code-bg: #1a1a1a;
+  --help-code-text: #d4d4d4;
   --help-scrollbar: #333333;
   --help-scrollbar-hover: #4a4a4a;
 }
@@ -297,50 +299,74 @@ body {
   max-width: 900px;
 }
 
-/* ─── Table of Contents (per chapter) ──────────────────────── */
+/* ─── TOC Bar (sticky under header) ────────────────────────── */
 
-.help-toc {
+.help-toc-bar {
   display: none;
-  background: var(--help-toc-bg);
-  border: 1px solid var(--help-toc-border);
-  border-radius: 8px;
-  padding: 16px 20px;
-  margin-bottom: 28px;
+  position: sticky;
+  top: 56px;
+  z-index: 90;
+  background: var(--help-header-bg);
+  border-bottom: 1px solid var(--help-border);
+  padding: 0 20px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+  scrollbar-width: none;
 }
 
-.help-toc.active { display: block; }
+.help-toc-bar::-webkit-scrollbar { display: none; }
 
-.help-toc-title {
-  font-weight: 700;
-  font-size: 0.82rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+.help-toc-bar.active { display: flex; align-items: center; gap: 0; height: 36px; }
+
+.help-toc-bar a {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  height: 36px;
   color: var(--help-text-muted);
-  margin-bottom: 8px;
-}
-
-.help-toc-list {
-  list-style: none;
-}
-
-.help-toc-list li {
-  margin: 3px 0;
-}
-
-.help-toc-list a {
-  color: var(--help-text);
   text-decoration: none;
-  font-size: 0.85rem;
-  transition: color 0.1s;
+  font-size: 0.78rem;
+  white-space: nowrap;
+  transition: color 0.15s;
+  flex-shrink: 0;
 }
 
-.help-toc-list a:hover,
-.help-toc-list a.active {
+.help-toc-bar a::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 12px;
+  right: 12px;
+  height: 2px;
+  background: transparent;
+  transition: background 0.15s;
+}
+
+.help-toc-bar a:hover { color: var(--help-text); }
+
+.help-toc-bar a.active {
   color: var(--help-accent);
 }
 
-.help-toc-list .toc-h3 { padding-left: 16px; }
-.help-toc-list .toc-h4 { padding-left: 32px; }
+.help-toc-bar a.active::after {
+  background: var(--help-accent);
+}
+
+.help-toc-bar .toc-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--help-border);
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.help-toc-bar a.active .toc-dot {
+  background: var(--help-accent);
+}
 
 /* ─── Article (rendered Markdown) ──────────────────────────── */
 

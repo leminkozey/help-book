@@ -15,7 +15,7 @@
   var $title    = document.querySelector('.help-title');
   var $nav      = document.querySelector('.help-nav');
   var $article  = document.querySelector('.help-article');
-  var $toc      = document.querySelector('.help-toc');
+  var $toc      = document.querySelector('.help-toc-bar');
   var $footer   = document.querySelector('.help-footer');
   var $sidebar  = document.querySelector('.help-sidebar');
   var $overlay  = document.querySelector('.help-sidebar-overlay');
@@ -230,19 +230,23 @@
 
   // ─── Chapter TOC ───────────────────────────────────────────
 
+  var tocObserver = null;
+
   function buildToc() {
-    var headings = $article.querySelectorAll('h2, h3, h4');
+    // Clean up old observer
+    if (tocObserver) { tocObserver.disconnect(); tocObserver = null; }
+
+    var headings = $article.querySelectorAll('h2, h3');
     if (headings.length < 2) {
       $toc.classList.remove('active');
+      $toc.innerHTML = '';
       return;
     }
 
-    var html = '<div class="help-toc-title">On this page</div><ul class="help-toc-list">';
+    var html = '';
     headings.forEach(function (h) {
-      var tag = h.tagName.toLowerCase();
-      html += '<li class="toc-' + tag + '"><a href="#' + h.id + '">' + escapeHtml(h.textContent) + '</a></li>';
+      html += '<a href="#' + h.id + '"><span class="toc-dot"></span>' + escapeHtml(h.textContent) + '</a>';
     });
-    html += '</ul>';
 
     $toc.innerHTML = html;
     $toc.classList.add('active');
@@ -264,17 +268,21 @@
     var tocLinks = $toc.querySelectorAll('a');
     if (!tocLinks.length) return;
 
-    var observer = new IntersectionObserver(function (entries) {
+    tocObserver = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
         if (entry.isIntersecting) {
           tocLinks.forEach(function (a) { a.classList.remove('active'); });
           var link = $toc.querySelector('a[href="#' + entry.target.id + '"]');
-          if (link) link.classList.add('active');
+          if (link) {
+            link.classList.add('active');
+            // Scroll the active item into view in the bar
+            link.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+          }
         }
       });
-    }, { rootMargin: '-80px 0px -70% 0px' });
+    }, { rootMargin: '-100px 0px -70% 0px' });
 
-    headings.forEach(function (h) { observer.observe(h); });
+    headings.forEach(function (h) { tocObserver.observe(h); });
   }
 
   // ─── Prev / Next ───────────────────────────────────────────
