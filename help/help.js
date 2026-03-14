@@ -243,22 +243,23 @@
       return;
     }
 
-    var html = '';
+    var inner = document.createElement('div');
+    inner.className = 'help-toc-bar-inner';
     headings.forEach(function (h) {
-      html += '<a href="#' + h.id + '"><span class="toc-dot"></span>' + escapeHtml(h.textContent) + '</a>';
-    });
-
-    $toc.innerHTML = html;
-    $toc.classList.add('active');
-
-    // TOC link clicks
-    $toc.querySelectorAll('a').forEach(function (a) {
+      var a = document.createElement('a');
+      a.href = '#' + h.id;
+      a.innerHTML = '<span class="toc-dot"></span>' + escapeHtml(h.textContent);
       a.addEventListener('click', function (e) {
         e.preventDefault();
-        var target = document.getElementById(a.getAttribute('href').slice(1));
+        var target = document.getElementById(h.id);
         if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
+      inner.appendChild(a);
     });
+
+    $toc.innerHTML = '';
+    $toc.appendChild(inner);
+    $toc.classList.add('active');
 
     // Scroll spy
     initScrollSpy(headings);
@@ -275,8 +276,11 @@
           var link = $toc.querySelector('a[href="#' + entry.target.id + '"]');
           if (link) {
             link.classList.add('active');
-            // Scroll the active item into view in the bar
-            link.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            // Scroll the active item into view within the toc bar
+            var barRect = $toc.getBoundingClientRect();
+            var linkRect = link.getBoundingClientRect();
+            var offset = linkRect.left - barRect.left - (barRect.width / 2) + (linkRect.width / 2);
+            $toc.scrollBy({ left: offset, behavior: 'smooth' });
           }
         }
       });

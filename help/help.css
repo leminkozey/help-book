@@ -209,7 +209,7 @@ body {
 
 .help-layout {
   display: flex;
-  min-height: calc(100vh - 56px);
+  min-height: calc(100vh - 92px);
 }
 
 /* ─── Sidebar ──────────────────────────────────────────────── */
@@ -222,8 +222,8 @@ body {
   padding: 16px 0;
   overflow-y: auto;
   position: sticky;
-  top: 56px;
-  height: calc(100vh - 56px);
+  top: 92px;
+  height: calc(100vh - 92px);
   transition: background 0.2s;
 }
 
@@ -317,7 +317,15 @@ body {
 
 .help-toc-bar::-webkit-scrollbar { display: none; }
 
-.help-toc-bar.active { display: flex; align-items: center; gap: 0; height: 36px; }
+.help-toc-bar.active { display: block; height: 36px; text-align: center; }
+
+.help-toc-bar-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  height: 36px;
+  white-space: nowrap;
+}
 
 .help-toc-bar a {
   position: relative;
@@ -586,7 +594,8 @@ body {
   .help-sidebar {
     position: fixed;
     left: 0;
-    top: 56px;
+    top: 92px;
+    height: calc(100vh - 92px);
     z-index: 50;
     transform: translateX(-100%);
     transition: transform 0.2s ease;
