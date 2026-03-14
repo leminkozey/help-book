@@ -9,6 +9,7 @@
   var chapters = [];      // flat list of { id, title, file, parentId }
   var chapterTexts = {};  // id → raw markdown text (for search)
   var currentId = null;
+  var activeNavEl = null; // cached active sidebar element
 
   // ─── DOM refs ──────────────────────────────────────────────
 
@@ -27,7 +28,21 @@
   // ─── Init ──────────────────────────────────────────────────
 
   initTheme();
+  configureMarked();
   loadConfig();
+
+  function configureMarked() {
+    marked.setOptions({
+      highlight: function (code, lang) {
+        if (lang && hljs.getLanguage(lang)) {
+          return hljs.highlight(code, { language: lang }).value;
+        }
+        return hljs.highlightAuto(code).value;
+      },
+      breaks: false,
+      gfm: true,
+    });
+  }
 
   function loadConfig() {
     fetch('chapters.json')
@@ -58,7 +73,6 @@
       var li = document.createElement('li');
 
       if (item.children && item.children.length > 0) {
-        // Group with children
         var btn = document.createElement('button');
         btn.className = 'help-nav-item help-nav-group-toggle';
         btn.innerHTML = '<svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M4 2l4 4-4 4"/></svg> ' + escapeHtml(item.title);
@@ -68,7 +82,6 @@
         });
         li.appendChild(btn);
 
-        // If group itself has a file, make the title clickable to load it
         if (item.file) {
           btn.dataset.id = item.id;
           btn.addEventListener('click', function () {
@@ -81,7 +94,6 @@
         buildNav(item.children, ul, item.id);
         li.appendChild(ul);
       } else {
-        // Leaf chapter
         var a = document.createElement('a');
         a.className = 'help-nav-item';
         a.href = '#' + item.id;
@@ -123,6 +135,16 @@
 
   // ─── Navigation ────────────────────────────────────────────
 
+  function setActiveNav(id) {
+    if (activeNavEl) activeNavEl.classList.remove('active');
+    var el = $nav.querySelector('[data-id="' + id + '"]');
+    if (el) {
+      el.classList.add('active');
+      expandParents(el);
+      activeNavEl = el;
+    }
+  }
+
   function navigate(id) {
     var ch = chapters.find(function (c) { return c.id === id; });
     if (!ch) {
@@ -133,18 +155,8 @@
     currentId = id;
     window.location.hash = id;
     closeSidebar();
+    setActiveNav(id);
 
-    // Highlight active nav item
-    var navItems = $nav.querySelectorAll('.help-nav-item');
-    navItems.forEach(function (el) { el.classList.remove('active'); });
-    var active = $nav.querySelector('[data-id="' + id + '"]');
-    if (active) {
-      active.classList.add('active');
-      // Expand parent groups
-      expandParents(active);
-    }
-
-    // Load and render
     fetch(ch.file)
       .then(function (r) { return r.ok ? r.text() : '# Not Found'; })
       .then(function (md) {
@@ -152,7 +164,6 @@
         renderMarkdown(md);
         buildToc();
         buildPrevNext();
-        $article.scrollTop = 0;
         window.scrollTo(0, 0);
       });
   }
@@ -186,17 +197,6 @@
   // ─── Markdown Rendering ────────────────────────────────────
 
   function renderMarkdown(md) {
-    marked.setOptions({
-      highlight: function (code, lang) {
-        if (lang && hljs.getLanguage(lang)) {
-          return hljs.highlight(code, { language: lang }).value;
-        }
-        return hljs.highlightAuto(code).value;
-      },
-      breaks: false,
-      gfm: true,
-    });
-
     $article.innerHTML = marked.parse(md);
 
     // Add IDs to headings for TOC links
@@ -231,10 +231,11 @@
   // ─── Chapter TOC ───────────────────────────────────────────
 
   var tocObserver = null;
+  var tocLinks = [];  // cached for scroll spy
 
   function buildToc() {
-    // Clean up old observer
     if (tocObserver) { tocObserver.disconnect(); tocObserver = null; }
+    tocLinks = [];
 
     var headings = $article.querySelectorAll('h2, h3');
     if (headings.length < 2) {
@@ -251,40 +252,46 @@
       a.innerHTML = '<span class="toc-dot"></span>' + escapeHtml(h.textContent);
       a.addEventListener('click', function (e) {
         e.preventDefault();
-        // Set active immediately for visual feedback
-        inner.querySelectorAll('a').forEach(function (el) { el.classList.remove('active'); });
-        a.classList.add('active');
+        setActiveTocLink(a);
         var target = document.getElementById(h.id);
         if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
       inner.appendChild(a);
+      tocLinks.push(a);
     });
 
     $toc.innerHTML = '';
     $toc.appendChild(inner);
     $toc.classList.add('active');
 
-    // Scroll spy
     initScrollSpy(headings);
   }
 
+  var activeTocLink = null;
+
+  function setActiveTocLink(link) {
+    if (activeTocLink === link) return;
+    if (activeTocLink) activeTocLink.classList.remove('active');
+    link.classList.add('active');
+    activeTocLink = link;
+
+    // Only scroll bar if link is not fully visible
+    var barRect = $toc.getBoundingClientRect();
+    var linkRect = link.getBoundingClientRect();
+    if (linkRect.left < barRect.left || linkRect.right > barRect.right) {
+      var offset = linkRect.left - barRect.left - (barRect.width / 2) + (linkRect.width / 2);
+      $toc.scrollBy({ left: offset, behavior: 'smooth' });
+    }
+  }
+
   function initScrollSpy(headings) {
-    var tocLinks = $toc.querySelectorAll('a');
     if (!tocLinks.length) return;
 
     tocObserver = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
         if (entry.isIntersecting) {
-          tocLinks.forEach(function (a) { a.classList.remove('active'); });
           var link = $toc.querySelector('a[href="#' + entry.target.id + '"]');
-          if (link) {
-            link.classList.add('active');
-            // Scroll the active item into view within the toc bar
-            var barRect = $toc.getBoundingClientRect();
-            var linkRect = link.getBoundingClientRect();
-            var offset = linkRect.left - barRect.left - (barRect.width / 2) + (linkRect.width / 2);
-            $toc.scrollBy({ left: offset, behavior: 'smooth' });
-          }
+          if (link) setActiveTocLink(link);
         }
       });
     }, { rootMargin: '-100px 0px -70% 0px' });
@@ -295,7 +302,6 @@
   // ─── Prev / Next ───────────────────────────────────────────
 
   function buildPrevNext() {
-    // Remove old prev/next first
     var old = document.querySelector('.help-prev-next');
     if (old) old.remove();
 
@@ -349,6 +355,17 @@
     }
   });
 
+  // Event delegation for search results
+  $results.addEventListener('click', function (e) {
+    var result = e.target.closest('.help-search-result');
+    if (!result) return;
+    e.preventDefault();
+    var id = result.getAttribute('href').slice(1);
+    $search.value = '';
+    $results.classList.remove('active');
+    navigate(id);
+  });
+
   function performSearch(query) {
     var results = [];
 
@@ -358,14 +375,12 @@
       var idx = lower.indexOf(query);
       if (idx === -1) return;
 
-      // Extract snippet around match
       var start = Math.max(0, idx - 40);
       var end = Math.min(text.length, idx + query.length + 60);
       var snippet = (start > 0 ? '...' : '') +
         text.substring(start, end).replace(/\n/g, ' ') +
         (end < text.length ? '...' : '');
 
-      // Highlight match in snippet
       var escaped = escapeHtml(snippet);
       var re = new RegExp('(' + escapeRegex(escapeHtml(query)) + ')', 'gi');
       escaped = escaped.replace(re, '<mark>$1</mark>');
@@ -381,16 +396,6 @@
           '<div class="help-search-result-title">' + escapeHtml(r.title) + '</div>' +
           '<div class="help-search-result-snippet">' + r.snippet + '</div></a>';
       }).join('');
-
-      $results.querySelectorAll('.help-search-result').forEach(function (el) {
-        el.addEventListener('click', function (e) {
-          e.preventDefault();
-          var id = el.getAttribute('href').slice(1);
-          $search.value = '';
-          $results.classList.remove('active');
-          navigate(id);
-        });
-      });
     }
 
     $results.classList.add('active');
@@ -442,7 +447,6 @@
   // ─── Keyboard Shortcuts ────────────────────────────────────
 
   document.addEventListener('keydown', function (e) {
-    // Ctrl/Cmd + K → focus search
     if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
       e.preventDefault();
       $search.focus();
