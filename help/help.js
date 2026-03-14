@@ -251,6 +251,9 @@
       a.innerHTML = '<span class="toc-dot"></span>' + escapeHtml(h.textContent);
       a.addEventListener('click', function (e) {
         e.preventDefault();
+        // Set active immediately for visual feedback
+        inner.querySelectorAll('a').forEach(function (el) { el.classList.remove('active'); });
+        a.classList.add('active');
         var target = document.getElementById(h.id);
         if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
