@@ -280,6 +280,10 @@
   // ─── Prev / Next ───────────────────────────────────────────
 
   function buildPrevNext() {
+    // Remove old prev/next first
+    var old = document.querySelector('.help-prev-next');
+    if (old) old.remove();
+
     var idx = chapters.findIndex(function (c) { return c.id === currentId; });
     var html = '';
 
@@ -298,13 +302,6 @@
       nav.className = 'help-prev-next';
       nav.innerHTML = html;
       $article.after(nav);
-
-      // Remove old prev/next if exists
-      var existing = document.querySelectorAll('.help-prev-next');
-      if (existing.length > 1) existing[0].remove();
-    } else {
-      var old = document.querySelector('.help-prev-next');
-      if (old) old.remove();
     }
   }
 
@@ -398,11 +395,20 @@
 
   // ─── Theme Toggle ─────────────────────────────────────────
 
+  function setHljsTheme(dark) {
+    var light = document.getElementById('hljs-light');
+    var darkSheet = document.getElementById('hljs-dark');
+    if (light) light.disabled = dark;
+    if (darkSheet) darkSheet.disabled = !dark;
+  }
+
   function initTheme() {
     var saved = localStorage.getItem('help-theme');
-    if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    var dark = saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    if (dark) {
       document.documentElement.setAttribute('data-theme', 'dark');
     }
+    setHljsTheme(dark);
   }
 
   $theme.addEventListener('click', function () {
@@ -410,9 +416,11 @@
     if (isDark) {
       document.documentElement.removeAttribute('data-theme');
       localStorage.setItem('help-theme', 'light');
+      setHljsTheme(false);
     } else {
       document.documentElement.setAttribute('data-theme', 'dark');
       localStorage.setItem('help-theme', 'dark');
+      setHljsTheme(true);
     }
   });
 
