@@ -6,7 +6,7 @@
   'use strict';
 
   var config = null;
-  var chapters = [];      // flat list of { id, title, file, parentId }
+  var chapters = [];      // flat list of { id, title, file }
   var chapterTexts = {};  // id → raw markdown text (for search)
   var currentId = null;
   var activeNavEl = null; // cached active sidebar element
@@ -76,25 +76,14 @@
         var btn = document.createElement('button');
         btn.className = 'help-nav-item help-nav-group-toggle';
         btn.innerHTML = '<svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M4 2l4 4-4 4"/></svg> ' + escapeHtml(item.title);
-        if (item.file) {
-          btn.dataset.id = item.id;
-          btn.addEventListener('click', function (e) {
-            // Chevron click: only toggle. Text click: toggle + navigate.
-            if (e.target.closest('.chevron')) {
-              btn.classList.toggle('expanded');
-              ul.classList.toggle('expanded');
-            } else {
-              btn.classList.toggle('expanded');
-              ul.classList.toggle('expanded');
-              navigate(item.id);
-            }
-          });
-        } else {
-          btn.addEventListener('click', function () {
-            btn.classList.toggle('expanded');
-            ul.classList.toggle('expanded');
-          });
-        }
+        if (item.file) btn.dataset.id = item.id;
+        btn.addEventListener('click', function (e) {
+          btn.classList.toggle('expanded');
+          ul.classList.toggle('expanded');
+          if (item.file && !e.target.closest('.chevron')) {
+            navigate(item.id);
+          }
+        });
         li.appendChild(btn);
 
         var ul = document.createElement('ul');
@@ -165,8 +154,13 @@
     closeSidebar();
     setActiveNav(id);
 
-    fetch(ch.file)
-      .then(function (r) { return r.ok ? r.text() : '# Not Found'; })
+    var cached = chapterTexts[id];
+    var promise = cached
+      ? Promise.resolve(cached)
+      : fetch(ch.file)
+          .then(function (r) { return r.ok ? r.text() : '# Not Found'; });
+
+    promise
       .then(function (md) {
         chapterTexts[id] = md;
         renderMarkdown(md);
@@ -249,12 +243,16 @@
 
   var tocObserver = null;
   var tocLinks = [];  // cached for scroll spy
+  var tocLinkMap = {}; // id → link element for O(1) scroll spy lookup
+  var activeTocLink = null;
+  var scrollSpyLocked = false;
 
   var STICKY_OFFSET = 92; // header (56) + toc bar (36)
 
   function buildToc() {
     if (tocObserver) { tocObserver.disconnect(); tocObserver = null; }
     tocLinks = [];
+    tocLinkMap = {};
     activeTocLink = null;
     scrollSpyLocked = false;
 
@@ -278,6 +276,7 @@
       });
       inner.appendChild(a);
       tocLinks.push(a);
+      tocLinkMap[h.id] = a;
     });
 
     $toc.innerHTML = '';
@@ -286,9 +285,6 @@
 
     initScrollSpy(headings);
   }
-
-  var activeTocLink = null;
-  var scrollSpyLocked = false;
 
   function scrollToHeading(id) {
     var target = document.getElementById(id);
@@ -322,7 +318,7 @@
       if (scrollSpyLocked) return;
       entries.forEach(function (entry) {
         if (entry.isIntersecting) {
-          var link = $toc.querySelector('a[href="#' + CSS.escape(entry.target.id) + '"]');
+          var link = tocLinkMap[entry.target.id];
           if (link) setActiveTocLink(link);
         }
       });
