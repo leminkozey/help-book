@@ -1,0 +1,33 @@
+{
+  "title": "Help Book Demo",
+  "version": "v1.0.0",
+  "accent": "#e8791d",
+  "chapters": [
+    {
+      "id": "getting-started",
+      "title": "Getting Started",
+      "file": "chapters/01-getting-started.md"
+    },
+    {
+      "id": "configuration",
+      "title": "Configuration",
+      "file": "chapters/02-configuration.md"
+    },
+    {
+      "id": "features",
+      "title": "Features",
+      "children": [
+        {
+          "id": "dashboard",
+          "title": "Dashboard",
+          "file": "chapters/03-features/01-dashboard.md"
+        },
+        {
+          "id": "settings",
+          "title": "Settings",
+          "file": "chapters/03-features/02-settings.md"
+        }
+      ]
+    }
+  ]
+}
