@@ -208,6 +208,10 @@ body {
 
 .help-layout {
   display: flex;
+  min-height: calc(100vh - 56px);
+}
+
+.help-toc-bar.active ~ .help-layout {
   min-height: calc(100vh - 92px);
 }
 
@@ -221,9 +225,14 @@ body {
   padding: 16px 0;
   overflow-y: auto;
   position: sticky;
+  top: 56px;
+  height: calc(100vh - 56px);
+  transition: background 0.2s;
+}
+
+.help-toc-bar.active ~ .help-layout .help-sidebar {
   top: 92px;
   height: calc(100vh - 92px);
-  transition: background 0.2s;
 }
 
 .help-sidebar-overlay {
@@ -592,12 +601,17 @@ body {
   .help-sidebar {
     position: fixed;
     left: 0;
-    top: 92px;
-    height: calc(100vh - 92px);
+    top: 56px;
+    height: calc(100vh - 56px);
     z-index: 50;
     transform: translateX(-100%);
     transition: transform 0.2s ease;
     box-shadow: 4px 0 12px rgba(0,0,0,0.1);
+  }
+
+  .help-toc-bar.active ~ .help-layout .help-sidebar {
+    top: 92px;
+    height: calc(100vh - 92px);
   }
 
   .help-sidebar.open {
