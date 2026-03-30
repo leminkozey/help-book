@@ -5,10 +5,10 @@
 (function () {
   'use strict';
 
-  var config = null;
   var chapters = [];      // flat list of { id, title, file }
   var chapterTexts = {};  // id → raw markdown text (for search)
   var currentId = null;
+  var chaptersReady = false;
   var activeNavEl = null; // cached active sidebar element
 
   // ─── DOM refs ──────────────────────────────────────────────
@@ -46,20 +46,22 @@
 
   function loadConfig() {
     fetch('chapters.json')
-      .then(function (r) { return r.json(); })
+      .then(function (r) {
+        if (!r.ok) throw new Error('Failed to load chapters.json');
+        return r.json();
+      })
       .then(function (data) {
-        config = data;
-        if (config.accent) {
-          document.documentElement.style.setProperty('--help-accent', config.accent);
+        if (data.accent) {
+          document.documentElement.style.setProperty('--help-accent', data.accent);
         }
-        $title.textContent = config.title || 'Help';
-        document.title = config.title || 'Help';
-        buildNav(config.chapters, $nav);
-        flattenChapters(config.chapters);
+        $title.textContent = data.title || 'Help';
+        document.title = data.title || 'Help';
+        buildNav(data.chapters, $nav);
+        flattenChapters(data.chapters);
         preloadChapters();
         navigateFromHash();
         $footer.innerHTML = 'made by <a href="https://leminkozey.me" target="_blank">leminkozey</a>' +
-          (config.version ? ' &middot; ' + escapeHtml(config.version) : '');
+          (data.version ? ' &middot; ' + escapeHtml(data.version) : '');
       })
       .catch(function () {
         $article.innerHTML = '<p>Failed to load chapters.json</p>';
@@ -123,11 +125,13 @@
   // ─── Preload chapter texts for search ──────────────────────
 
   function preloadChapters() {
-    chapters.forEach(function (ch) {
-      fetch(ch.file)
+    var promises = chapters.map(function (ch) {
+      return fetch(ch.file)
         .then(function (r) { return r.ok ? r.text() : ''; })
-        .then(function (text) { chapterTexts[ch.id] = text; });
+        .then(function (text) { chapterTexts[ch.id] = text; })
+        .catch(function () { chapterTexts[ch.id] = ''; });
     });
+    Promise.all(promises).then(function () { chaptersReady = true; });
   }
 
   // ─── Navigation ────────────────────────────────────────────
@@ -202,7 +206,7 @@
   // ─── Markdown Rendering ────────────────────────────────────
 
   function renderMarkdown(md) {
-    $article.innerHTML = marked.parse(md);
+    $article.innerHTML = DOMPurify.sanitize(marked.parse(md));
 
     // Add IDs to headings for TOC links (deduplicate)
     var usedIds = {};
@@ -338,12 +342,12 @@
 
     if (idx > 0) {
       var prev = chapters[idx - 1];
-      html += '<a href="#' + prev.id + '" class="prev"><span class="prev-label">Previous</span><br>' + escapeHtml(prev.title) + '</a>';
+      html += '<a href="#' + encodeURIComponent(prev.id) + '" class="prev"><span class="prev-label">Previous</span><br>' + escapeHtml(prev.title) + '</a>';
     }
 
     if (idx < chapters.length - 1) {
       var next = chapters[idx + 1];
-      html += '<a href="#' + next.id + '" class="next"><span class="next-label">Next</span><br>' + escapeHtml(next.title) + '</a>';
+      html += '<a href="#' + encodeURIComponent(next.id) + '" class="next"><span class="next-label">Next</span><br>' + escapeHtml(next.title) + '</a>';
     }
 
     if (html) {
@@ -395,6 +399,7 @@
   });
 
   function performSearch(query) {
+    if (!chaptersReady) return;
     var results = [];
 
     chapters.forEach(function (ch) {
@@ -420,7 +425,7 @@
       $results.innerHTML = '<div class="help-search-empty">No results found</div>';
     } else {
       $results.innerHTML = results.slice(0, 10).map(function (r) {
-        return '<a class="help-search-result" href="#' + r.id + '">' +
+        return '<a class="help-search-result" href="#' + encodeURIComponent(r.id) + '">' +
           '<div class="help-search-result-title">' + escapeHtml(r.title) + '</div>' +
           '<div class="help-search-result-snippet">' + r.snippet + '</div></a>';
       }).join('');
@@ -484,9 +489,11 @@
   // ─── Helpers ───────────────────────────────────────────────
 
   function escapeHtml(str) {
-    var div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 
   function escapeRegex(str) {
