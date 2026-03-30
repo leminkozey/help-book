@@ -491,19 +491,18 @@ body {
   position: absolute;
   top: 8px;
   right: 8px;
-  background: rgba(255,255,255,0.1);
+  background: var(--help-border);
   border: none;
-  color: #a6adc8;
+  color: var(--help-text-muted);
   padding: 4px 10px;
   border-radius: 4px;
   font-size: 0.72rem;
   cursor: pointer;
-  opacity: 0;
+  opacity: 0.7;
   transition: opacity 0.15s, background 0.15s;
 }
 
-.help-article pre:hover .help-copy-btn { opacity: 1; }
-.help-copy-btn:hover { background: rgba(255,255,255,0.2); }
+.help-copy-btn:hover { opacity: 1; background: var(--help-accent); color: #fff; }
 
 /* ─── Tables ───────────────────────────────────────────────── */
 
