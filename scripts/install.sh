@@ -33,8 +33,10 @@ resolve_target() {
 abort_if_unsafe_target() {
   local resolved
   resolved=$(resolve_target "$1")
+  # block system paths; include /private/* siblings because macOS realpath normalises /etc → /private/etc
+  # do NOT block /var entirely — macOS user-tmp lives in /var/folders/.../tmp.XXX
   case "$resolved" in
-    /|/etc|/etc/*|/usr|/usr/*|/bin|/bin/*|/sbin|/sbin/*|/lib|/lib/*|/var|/var/*|/boot|/boot/*)
+    /|/etc|/etc/*|/private/etc|/private/etc/*|/usr|/usr/*|/private/usr|/private/usr/*|/bin|/bin/*|/sbin|/sbin/*|/lib|/lib/*|/boot|/boot/*)
       echo "[help-book] refuse to install into system path: $resolved" >&2
       exit 1
       ;;
@@ -101,9 +103,12 @@ mkdir -p "$TARGET"
 # mode detection via marker file with legacy fallback (closes #7, #9)
 if [ -f "$TARGET/$MARKER" ]; then
   MODE="update"
-elif [ -f "$TARGET/chapters.json" ] || \
-     { [ -d "$TARGET/chapters" ] && [ -n "$(ls -A "$TARGET/chapters" 2>/dev/null)" ]; }; then
-  # legacy install (no marker yet, but user content present)
+elif [ -f "$TARGET/chapters.json" ]; then
+  MODE="update"
+elif [ -d "$TARGET/chapters" ] && [ -n "$(ls -A "$TARGET/chapters" 2>/dev/null)" ]; then
+  # chapters/ has user content but chapters.json is missing — warn explicitly so user notices
+  echo "[help-book] WARNING: chapters/ has files but chapters.json is missing" >&2
+  echo "[help-book] not writing a starter — create your own chapters.json to wire up these chapters" >&2
   MODE="update"
 else
   MODE="install"
