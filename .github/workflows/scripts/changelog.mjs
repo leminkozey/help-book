@@ -141,13 +141,13 @@ try {
 const versionHeading = `## [${versionLabel}]`;
 if (changelog.includes(versionHeading)) {
   console.log(`CHANGELOG.md already contains ${versionHeading}, using it as release body.`);
-  const sectionRe = new RegExp(
-    String.raw`(##\s*\[${versionLabel.replace(/\./g, '\\.')}\][\s\S]*?)(?=\n##\s*\[|\[Unreleased\]:|$)`,
-    'm'
-  );
-  const m = changelog.match(sectionRe);
-  if (m && m[1].trim()) {
-    entry = m[1].trim() + '\n';
+  // Split at every "## [" heading and find the section for this version.
+  const sections = changelog.split(/^##\s*\[/m).slice(1);
+  const mySection = sections.find(s => s.startsWith(`${versionLabel}]`));
+  if (mySection) {
+    // Strip trailing link-reference block ("[1.0.0]: https://...") if it leaked in
+    const cleaned = mySection.replace(/\n\[[^\]]+\]:\s+http[\s\S]*$/m, '').trim();
+    entry = '## [' + cleaned + '\n';
   }
 } else {
   const unreleasedRe = /(##\s*\[Unreleased\][^\n]*\n)/i;
