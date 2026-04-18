@@ -237,6 +237,7 @@
 
   function navigateFromHash() {
     var hash = window.location.hash.slice(1);
+    try { hash = decodeURIComponent(hash); } catch (e) { /* leave raw */ }
     if (hash && chapters.find(function (c) { return c.id === hash; })) {
       navigate(hash);
     } else if (chapters.length > 0) {
@@ -246,6 +247,7 @@
 
   window.addEventListener('hashchange', function () {
     var hash = window.location.hash.slice(1);
+    try { hash = decodeURIComponent(hash); } catch (e) { /* leave raw */ }
     if (hash !== currentId) navigateFromHash();
   });
 
@@ -331,6 +333,8 @@
     if (headings.length < 2) {
       $toc.classList.remove('active');
       $toc.innerHTML = '';
+      // Release the navigate()-set lock since initScrollSpy() won't run
+      requestAnimationFrame(function () { scrollSpyLocked = false; });
       return;
     }
 
@@ -585,9 +589,14 @@
     });
   }
 
-  // Cross-tab theme sync
+  // Cross-tab theme sync — null means storage was cleared, fall back to OS pref
   window.addEventListener('storage', function (e) {
-    if (e.key === 'help-theme') applyTheme(e.newValue === 'dark' ? 'dark' : 'light');
+    if (e.key !== 'help-theme') return;
+    if (e.newValue === 'dark' || e.newValue === 'light') {
+      applyTheme(e.newValue);
+    } else {
+      applyTheme(mql && mql.matches ? 'dark' : 'light');
+    }
   });
 
   // ─── Keyboard Shortcuts ────────────────────────────────────
