@@ -322,7 +322,7 @@
   var activeTocLink = null;
   var scrollSpyLocked = false;
 
-  var STICKY_OFFSET = 92; // header (56) + toc bar (36) — fallback only
+  var STICKY_OFFSET = 56; // header height (TOC bar is now inline in header)
   var HEADER_HEIGHT = 56;
 
   function buildToc() {
@@ -374,8 +374,7 @@
     // Lock scroll spy during programmatic scroll to prevent flickering
     scrollSpyLocked = true;
     if (scrollHeadingTimer) clearTimeout(scrollHeadingTimer);
-    var dynamicOffset = ($toc && $toc.classList.contains('active') ? $toc.offsetHeight : 0) + HEADER_HEIGHT;
-    var top = target.getBoundingClientRect().top + window.scrollY - dynamicOffset - 8;
+    var top = target.getBoundingClientRect().top + window.scrollY - HEADER_HEIGHT - 16;
     window.scrollTo({ top: top, behavior: 'smooth' });
     scrollHeadingTimer = setTimeout(function () {
       scrollSpyLocked = false;
