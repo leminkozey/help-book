@@ -1,12 +1,10 @@
 #!/usr/bin/env node
-// Generate a Keep-a-Changelog entry from Conventional Commits in a git range.
-// Updates CHANGELOG.md in place, writes release body + closing-issues list to $RUNNER_TEMP.
+// generate keep-a-changelog entry from conventional commits, write release body + closing-issues to $RUNNER_TEMP
 
 import { execSync } from 'node:child_process';
 import { readFileSync, writeFileSync, appendFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-// ─── CLI args ────────────────────────────────────────────────────────────
 const args = Object.fromEntries(
   process.argv.slice(2).reduce((acc, cur, i, arr) => {
     if (cur.startsWith('--')) acc.push([cur.slice(2), arr[i + 1]]);
@@ -24,7 +22,6 @@ if (!repoUrl) {
   process.exit(1);
 }
 
-// ─── Type → section mapping ──────────────────────────────────────────────
 const SECTIONS = {
   feat: 'Added',
   fix: 'Fixed',
@@ -37,7 +34,6 @@ const BREAKING_SECTION = 'Changed (BREAKING)';
 const ORDER = ['Changed (BREAKING)', 'Added', 'Changed', 'Fixed', 'Security', 'Documentation'];
 const SKIP = new Set(['refactor', 'style', 'test', 'ci', 'chore']);
 
-// ─── Read commits ────────────────────────────────────────────────────────
 let raw;
 try {
   raw = execSync(
@@ -60,7 +56,6 @@ const commits = raw
     return { hash, subject: subject || '', body: bodyParts.join('\t').trim() };
   });
 
-// ─── Parse Conventional Commits ──────────────────────────────────────────
 const COMMIT_RE = /^(feat|fix|perf|refactor|docs|style|test|build|ci|chore|security)(\(([^)]+)\))?(!)?:\s*(.+?)\s*$/;
 const SUBJECT_ISSUE_RE = /\(?#(\d+)\)?\s*$/;
 const BODY_CLOSE_RE = /\b(close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)/gi;
@@ -76,11 +71,10 @@ function bucket(name) {
 
 for (const c of commits) {
   const m = c.subject.match(COMMIT_RE);
-  if (!m) continue; // not conventional, skip
+  if (!m) continue;
   const [, type, , scope, breakingMark, msgRaw] = m;
   if (SKIP.has(type) && !breakingMark && !/^BREAKING CHANGE:/m.test(c.body)) continue;
 
-  // Extract trailing (#N) from subject for display + closing
   let msg = msgRaw;
   const subjectIssue = msg.match(SUBJECT_ISSUE_RE);
   let displayIssue = null;
@@ -89,18 +83,15 @@ for (const c of commits) {
     msg = msg.replace(SUBJECT_ISSUE_RE, '').trim();
   }
 
-  // Parse body for closing keywords + refs
   for (const m2 of c.body.matchAll(BODY_CLOSE_RE)) closingIssues.add([m2[2], c.hash.slice(0, 7)].join('\t'));
-  for (const m2 of c.body.matchAll(BODY_REF_RE)) {
-    // refs are NOT closed but linked
-  }
+  // refs are linked but NOT auto-closed
+  for (const m2 of c.body.matchAll(BODY_REF_RE)) { void m2; }
   if (displayIssue) closingIssues.add([displayIssue, c.hash.slice(0, 7)].join('\t'));
 
   const isBreaking = !!breakingMark || /^BREAKING CHANGE:/m.test(c.body);
   const sectionName = isBreaking ? BREAKING_SECTION : SECTIONS[type];
   if (!sectionName) continue;
 
-  // Render bullet
   const scopePart = scope ? `**${scope}**: ` : '';
   const issuePart = displayIssue
     ? ` ([#${displayIssue}](${repoUrl}/issues/${displayIssue}))`
@@ -109,7 +100,6 @@ for (const c of commits) {
   bucket(sectionName).push(`- ${scopePart}${msg}${issuePart}${hashPart}`);
 }
 
-// ─── Build the release entry markdown ────────────────────────────────────
 const today = new Date().toISOString().slice(0, 10);
 const versionLabel = tag.replace(/^v/, '');
 let entry = `## [${versionLabel}] - ${today}\n`;
@@ -126,7 +116,6 @@ if (Object.keys(sections).length === 0) {
 
 console.log('--- Generated entry ---\n' + entry + '\n--- /entry ---');
 
-// ─── Update CHANGELOG.md (insert under [Unreleased]) ─────────────────────
 const changelogPath = resolve('CHANGELOG.md');
 let changelog;
 try {
@@ -135,17 +124,14 @@ try {
   changelog = '# Changelog\n\n## [Unreleased]\n';
 }
 
-// Skip if entry for this version already present — and prefer the existing
-// (manually curated) entry as the release body so a hand-written changelog wins
-// over the auto-generated bullet list.
+// hand-curated entry wins over auto-generated bullets — use existing one if present
 const versionHeading = `## [${versionLabel}]`;
 if (changelog.includes(versionHeading)) {
   console.log(`CHANGELOG.md already contains ${versionHeading}, using it as release body.`);
-  // Split at every "## [" heading and find the section for this version.
   const sections = changelog.split(/^##\s*\[/m).slice(1);
   const mySection = sections.find(s => s.startsWith(`${versionLabel}]`));
   if (mySection) {
-    // Strip trailing link-reference block ("[1.0.0]: https://...") if it leaked in
+    // strip trailing link-ref block — can leak into split section
     const cleaned = mySection.replace(/\n\[[^\]]+\]:\s+http[\s\S]*$/m, '').trim();
     entry = '## [' + cleaned + '\n';
   }
@@ -154,11 +140,9 @@ if (changelog.includes(versionHeading)) {
   if (unreleasedRe.test(changelog)) {
     changelog = changelog.replace(unreleasedRe, `$1\n${entry}`);
   } else {
-    // append at end
     changelog = changelog.trimEnd() + `\n\n${entry}\n`;
   }
 
-  // Update / add link references at the bottom
   changelog = updateLinkRefs(changelog, versionLabel, previous);
   writeFileSync(changelogPath, changelog);
   console.log('CHANGELOG.md updated.');
@@ -171,12 +155,11 @@ function updateLinkRefs(text, version, prev) {
     ? `[${version}]: ${repo}/compare/${prev}...v${version}`
     : `[${version}]: ${repo}/releases/tag/v${version}`;
 
-  // Strip any existing [Unreleased] / [version] link lines, then append fresh.
   text = text.replace(/^\[Unreleased\]:.*$/m, '').replace(/^\[\s*[\d.]+\s*\]:.*$/gm, line =>
     line.startsWith(`[${version}]:`) ? '' : line
   );
   text = text.trimEnd() + `\n\n${newUnreleased}\n${newCurrent}\n`;
-  // Re-add older version refs we may have stripped — simplest: re-walk file for all "## [x.y.z]" headings
+  // re-walk all "## [x.y.z]" headings to restore older refs we may have stripped
   const versionsInFile = [...text.matchAll(/^##\s*\[([\d.]+)\]/gm)].map(m => m[1]);
   for (const v of versionsInFile) {
     if (v === version) continue;
@@ -188,7 +171,6 @@ function updateLinkRefs(text, version, prev) {
   return text;
 }
 
-// ─── Write release body + closing-issues list to RUNNER_TEMP ─────────────
 const tmp = process.env.RUNNER_TEMP || '/tmp';
 writeFileSync(`${tmp}/release-body.md`, entry);
 
@@ -199,7 +181,6 @@ if (closingIssues.size > 0) {
   console.log('No closing issues to process.');
 }
 
-// GitHub Step Summary
 if (process.env.GITHUB_STEP_SUMMARY) {
   appendFileSync(process.env.GITHUB_STEP_SUMMARY, `## Release ${tag}\n\n${entry}\n`);
 }

@@ -1,21 +1,13 @@
-/* ============================================================
-   Help Book — Logic
-   ============================================================ */
-
 (function () {
   'use strict';
 
-  var chapters = [];      // flat list of { id, title, file }
-  // chapterTexts holds raw markdown for every chapter to enable instant
-  // client-side full-text search. Memory cost is intentional: search needs
-  // the full text and dropping entries would force re-fetches per query.
-  var chapterTexts = Object.create(null);  // id → raw markdown text (for search)
+  var chapters = [];
+  // hold full markdown for every chapter — search needs full text, dropping would force re-fetches
+  var chapterTexts = Object.create(null);
   var currentId = null;
   var chaptersReady = false;
-  var activeNavEl = null; // cached active sidebar element
-  var scrollHeadingTimer = null; // handle for scrollToHeading lock timeout
-
-  // ─── DOM refs ──────────────────────────────────────────────
+  var activeNavEl = null;
+  var scrollHeadingTimer = null;
 
   var $title    = document.querySelector('.help-title');
   var $nav      = document.querySelector('.help-nav');
@@ -29,8 +21,6 @@
   var $search   = document.querySelector('.help-search');
   var $results  = document.querySelector('.help-search-results');
   var $main     = document.querySelector('main');
-
-  // ─── Init ──────────────────────────────────────────────────
 
   initTheme();
   configureMarked();
@@ -75,8 +65,6 @@
       });
   }
 
-  // ─── Build Sidebar Nav ─────────────────────────────────────
-
   function buildNav(items, parent) {
     items.forEach(function (item) {
       var li = document.createElement('li');
@@ -92,12 +80,10 @@
         btn.addEventListener('click', function (e) {
           var clickedChevron = !!e.target.closest('.chevron');
           if (clickedChevron || !item.file) {
-            // Chevron click (or group without own file): toggle only
             var expanded = btn.classList.toggle('expanded');
             ul.classList.toggle('expanded');
             btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
           } else {
-            // Label click on group with file: navigate + expand
             btn.classList.add('expanded');
             ul.classList.add('expanded');
             btn.setAttribute('aria-expanded', 'true');
@@ -125,8 +111,6 @@
     });
   }
 
-  // ─── Flatten chapters for ordering ─────────────────────────
-
   function flattenChapters(items) {
     items.forEach(function (item) {
       if (item.file && isSafeChapterFile(item.file)) {
@@ -141,7 +125,7 @@
   function isSafeChapterFile(file) {
     if (typeof file !== 'string') return false;
     if (!/^[\w./-]+\.md$/.test(file)) return false;
-    // Reject path traversal that escapes the docs root
+    // reject path traversal escaping the docs root
     var parts = file.split('/');
     var depth = 0;
     for (var i = 0; i < parts.length; i++) {
@@ -153,8 +137,6 @@
     return true;
   }
 
-  // ─── Preload chapter texts for search ──────────────────────
-
   function preloadChapters() {
     var promises = chapters.map(function (ch) {
       return fetch(ch.file)
@@ -164,8 +146,6 @@
     });
     Promise.all(promises).then(function () { chaptersReady = true; });
   }
-
-  // ─── Navigation ────────────────────────────────────────────
 
   function setActiveNav(id) {
     if (activeNavEl) activeNavEl.classList.remove('active');
@@ -184,8 +164,7 @@
       return;
     }
 
-    // Set currentId BEFORE updating hash so the hashchange handler can
-    // bail out without triggering a redundant fetch.
+    // set currentId before hash update so hashchange handler can bail without redundant fetch
     currentId = id;
     if (window.location.hash.slice(1) !== id) {
       window.location.hash = id;
@@ -193,7 +172,7 @@
     closeSidebar();
     setActiveNav(id);
 
-    var navId = id; // snapshot for race-condition guard
+    var navId = id; // race guard: snapshot for stale-fetch detection below
     var cached = chapterTexts[id];
     var promise = cached
       ? Promise.resolve(cached)
@@ -202,11 +181,10 @@
 
     promise
       .then(function (md) {
-        // Bail if the user navigated elsewhere while the fetch was in flight
+        // bail if user navigated elsewhere while fetch was in flight
         if (navId !== currentId) return;
         chapterTexts[id] = md;
-        // Lock scroll spy BEFORE programmatic scroll so the IntersectionObserver
-        // doesn't flip "active" H2 to a random heading mid-render.
+        // must lock before programmatic scroll, else IntersectionObserver flips active H2 mid-render
         scrollSpyLocked = true;
         renderMarkdown(md);
         buildToc();
@@ -251,8 +229,6 @@
     if (hash !== currentId) navigateFromHash();
   });
 
-  // ─── Markdown Rendering ────────────────────────────────────
-
   function renderMarkdown(md) {
     var clean = DOMPurify.sanitize(marked.parse(md), {
       ALLOWED_URI_REGEXP: /^(?:https?|mailto|tel|#|\/|\.\/|\.\.\/)/i,
@@ -262,11 +238,7 @@
     });
     $article.innerHTML = clean;
 
-    // TODO: Demote first H1 to H2 to avoid multiple H1s per SPA view.
-    // Skipped: existing chapter styles target h1 explicitly and rewriting
-    // could break visual hierarchy. Revisit when CSS is audited.
-
-    // Add IDs to headings for TOC links (deduplicate)
+    // todo: demote first H1 to H2 (multiple H1s per SPA view) — skipped, chapter css targets h1 explicitly
     var usedIds = Object.create(null);
     var headings = $article.querySelectorAll('h1, h2, h3, h4');
     headings.forEach(function (h) {
@@ -283,7 +255,7 @@
       usedIds[h.id] = true;
     });
 
-    // Add copy buttons to code blocks (click handler is delegated on $article)
+    // click handler is delegated on $article, see initArticleDelegation
     var pres = $article.querySelectorAll('pre');
     pres.forEach(function (pre) {
       var btn = document.createElement('button');
@@ -312,15 +284,13 @@
     });
   }
 
-  // ─── Chapter TOC ───────────────────────────────────────────
-
   var tocObserver = null;
-  var tocLinks = [];  // cached for scroll spy
-  var tocLinkMap = Object.create(null); // id → link element for O(1) scroll spy lookup
+  var tocLinks = [];
+  var tocLinkMap = Object.create(null); // O(1) lookup for scroll spy
   var activeTocLink = null;
   var scrollSpyLocked = false;
 
-  var STICKY_OFFSET = 56; // header height (TOC bar is now inline in header)
+  var STICKY_OFFSET = 56;
   var HEADER_HEIGHT = 56;
 
   function buildToc() {
@@ -333,7 +303,7 @@
     if (headings.length < 2) {
       $toc.classList.remove('active');
       $toc.innerHTML = '';
-      // Release the navigate()-set lock since initScrollSpy() won't run
+      // release lock that navigate() set, since initScrollSpy() won't run to release it
       requestAnimationFrame(function () { scrollSpyLocked = false; });
       return;
     }
@@ -371,7 +341,7 @@
   function scrollToHeading(id) {
     var target = document.getElementById(id);
     if (!target) return;
-    // Lock scroll spy during programmatic scroll to prevent flickering
+    // lock during programmatic scroll to prevent active-link flicker
     scrollSpyLocked = true;
     if (scrollHeadingTimer) clearTimeout(scrollHeadingTimer);
     var top = target.getBoundingClientRect().top + window.scrollY - HEADER_HEIGHT - 16;
@@ -388,7 +358,7 @@
     link.classList.add('active');
     activeTocLink = link;
 
-    // Only scroll bar if link is not fully visible
+    // only scroll bar when link not fully visible
     var barRect = $toc.getBoundingClientRect();
     var linkRect = link.getBoundingClientRect();
     if (linkRect.left < barRect.left || linkRect.right > barRect.right) {
@@ -412,14 +382,11 @@
 
     headings.forEach(function (h) { tocObserver.observe(h); });
 
-    // Release the scroll-spy lock that navigate() set, after the layout
-    // has settled (post scrollTo(0,0)).
+    // double-rAF: release lock from navigate() only after layout settles post scrollTo(0,0)
     requestAnimationFrame(function () {
       requestAnimationFrame(function () { scrollSpyLocked = false; });
     });
   }
-
-  // ─── Prev / Next ───────────────────────────────────────────
 
   function buildPrevNext() {
     var old = document.querySelector('.help-prev-next');
@@ -445,8 +412,6 @@
       $article.after(nav);
     }
   }
-
-  // ─── Search ────────────────────────────────────────────────
 
   var searchTimeout = null;
 
@@ -476,14 +441,12 @@
     }
   });
 
-  // Close search on outside click
   document.addEventListener('click', function (e) {
     if (!e.target.closest('.help-search-wrapper')) {
       $results.classList.remove('active');
     }
   });
 
-  // Event delegation for search results
   $results.addEventListener('click', function (e) {
     var result = e.target.closest('.help-search-result');
     if (!result) return;
@@ -530,8 +493,6 @@
     $results.classList.add('active');
   }
 
-  // ─── Sidebar Toggle (Mobile) ───────────────────────────────
-
   $toggle.addEventListener('click', function () {
     var open = $sidebar.classList.toggle('open');
     $toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
@@ -547,8 +508,6 @@
   window.addEventListener('resize', function () {
     if (window.innerWidth > 768) closeSidebar();
   });
-
-  // ─── Theme Toggle ─────────────────────────────────────────
 
   function setHljsTheme(dark) {
     var light = document.getElementById('hljs-light');
@@ -581,7 +540,7 @@
     applyTheme(next);
   });
 
-  // Follow OS preference if user hasn't picked one explicitly
+  // follow OS only when user hasn't picked one explicitly
   var mql = window.matchMedia('(prefers-color-scheme: dark)');
   if (mql && typeof mql.addEventListener === 'function') {
     mql.addEventListener('change', function (e) {
@@ -589,7 +548,7 @@
     });
   }
 
-  // Cross-tab theme sync — null means storage was cleared, fall back to OS pref
+  // cross-tab sync — newValue null means storage cleared, fall back to OS pref
   window.addEventListener('storage', function (e) {
     if (e.key !== 'help-theme') return;
     if (e.newValue === 'dark' || e.newValue === 'light') {
@@ -599,12 +558,10 @@
     }
   });
 
-  // ─── Keyboard Shortcuts ────────────────────────────────────
-
   document.addEventListener('keydown', function (e) {
     if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
       var t = e.target;
-      // Allow Cmd+K from inside our own search input; skip if typing elsewhere
+      // allow cmd+k from our own search input, skip when typing in other inputs
       if (t && t !== $search && t.matches && t.matches('input,textarea,[contenteditable],[contenteditable="true"]')) {
         return;
       }
@@ -615,8 +572,6 @@
       closeSidebar();
     }
   });
-
-  // ─── Helpers ───────────────────────────────────────────────
 
   function escapeHtml(str) {
     return String(str)

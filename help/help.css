@@ -1,14 +1,8 @@
-/* ============================================================
-   Help Book — Styles (Mintlify-inspired)
-   ============================================================ */
-
 :root {
-  /* Brand */
   --help-accent: #18E299;
   --help-accent-deep: #0fa76e;
   --help-accent-light: #d4fae8;
 
-  /* Surfaces (macOS-style: BG grau, Cards heller) */
   --help-bg: #f5f5f7;
   --help-bg-secondary: #eeeef0;
   --help-card-bg: #ffffff;
@@ -17,43 +11,35 @@
   --help-search-bg: #ffffff;
   --help-toc-bg: rgba(245,245,247,0.75);
 
-  /* Text */
   --help-text: #0d0d0d;
   --help-text-body: #333333;
   --help-text-muted: #666666;
   --help-text-tertiary: #888888;
 
-  /* Borders */
   --help-border: rgba(0,0,0,0.05);
   --help-border-strong: rgba(0,0,0,0.08);
 
-  /* Code */
   --help-code-bg: #f5f5f5;
   --help-code-text: #0d0d0d;
   --help-kbd-bg: #f5f5f5;
   --help-kbd-border: rgba(0,0,0,0.08);
 
-  /* Depth */
   --help-shadow-card: 0 2px 4px rgba(0,0,0,0.03);
   --help-shadow-button: 0 1px 2px rgba(0,0,0,0.06);
   --help-shadow-pop: 0 8px 24px rgba(0,0,0,0.06);
 
-  /* Layout */
   --help-sidebar-w: 280px;
   --help-header-h: 56px;
 
-  /* Radii */
   --help-radius-sm: 4px;
   --help-radius-md: 8px;
   --help-radius-lg: 16px;
   --help-radius-xl: 24px;
   --help-radius-pill: 9999px;
 
-  /* Fonts */
   --help-font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --help-font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, 'JetBrains Mono', Menlo, monospace;
 
-  /* Scrollbar */
   --help-scrollbar: #e5e5e5;
   --help-scrollbar-hover: #888888;
 }
@@ -88,8 +74,6 @@
   --help-scrollbar-hover: #4a4a4a;
 }
 
-/* ─── Reset & Base ─────────────────────────────────────────── */
-
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html { -webkit-text-size-adjust: 100%; }
@@ -119,14 +103,10 @@ body {
   color: var(--help-accent);
 }
 
-/* ─── Scrollbar ────────────────────────────────────────────── */
-
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--help-scrollbar); border-radius: var(--help-radius-pill); }
 ::-webkit-scrollbar-thumb:hover { background: var(--help-scrollbar-hover); }
-
-/* ─── Header ───────────────────────────────────────────────── */
 
 .help-header {
   position: fixed;
@@ -205,8 +185,6 @@ body {
 [data-theme="dark"] .icon-moon { display: none; }
 :root:not([data-theme="dark"]) .icon-sun { display: none; }
 :root:not([data-theme="dark"]) .icon-moon { display: inline; }
-
-/* ─── Search ───────────────────────────────────────────────── */
 
 .help-search-wrapper {
   position: relative;
@@ -310,14 +288,10 @@ body {
   font-size: 14px;
 }
 
-/* ─── Layout ───────────────────────────────────────────────── */
-
 .help-layout {
   display: block;
   min-height: calc(100dvh - var(--help-header-h));
 }
-
-/* ─── Sidebar (fixed full-height) ──────────────────────────── */
 
 .help-sidebar {
   position: fixed;
@@ -420,15 +394,11 @@ body {
 
 .help-nav-children.expanded { display: block; }
 
-/* ─── Content ──────────────────────────────────────────────── */
-
 .help-content {
   min-width: 0;
   padding: 28px 48px 64px 16px;
   outline: none;
 }
-
-/* ─── TOC Bar ──────────────────────────────────────────────── */
 
 .help-toc-bar {
   display: none;
@@ -501,8 +471,6 @@ body {
 }
 
 .help-toc-bar a.active .toc-dot { background: var(--help-accent); }
-
-/* ─── Article (rendered Markdown) ──────────────────────────── */
 
 .help-article {
   font-family: var(--help-font-sans);
@@ -616,8 +584,6 @@ body {
   margin: 48px 0;
 }
 
-/* ─── Inline Code ──────────────────────────────────────────── */
-
 .help-article code {
   font-family: var(--help-font-mono);
   font-size: 0.875em;
@@ -627,8 +593,6 @@ body {
   padding: 2px 6px;
   border-radius: var(--help-radius-sm);
 }
-
-/* ─── Code Blocks ──────────────────────────────────────────── */
 
 .help-article pre {
   position: relative;
@@ -686,8 +650,6 @@ body {
   opacity: 1;
 }
 
-/* ─── Tables ───────────────────────────────────────────────── */
-
 .help-article table {
   width: 100%;
   border-collapse: separate;
@@ -717,8 +679,6 @@ body {
   letter-spacing: 0.5px;
 }
 
-/* ─── Keyboard Shortcuts ───────────────────────────────────── */
-
 .help-article kbd {
   display: inline-block;
   padding: 2px 8px;
@@ -731,8 +691,6 @@ body {
   border-radius: var(--help-radius-sm);
   box-shadow: 0 1px 0 var(--help-kbd-border);
 }
-
-/* ─── Footer ───────────────────────────────────────────────── */
 
 .help-footer {
   margin-top: 64px;
@@ -754,8 +712,6 @@ body {
 
 .help-footer a:hover { color: var(--help-accent-deep); }
 [data-theme="dark"] .help-footer a:hover { color: var(--help-accent); }
-
-/* ─── Prev / Next Navigation ───────────────────────────────── */
 
 .help-prev-next {
   display: flex;
@@ -803,8 +759,6 @@ body {
 }
 
 .help-prev-next .next { margin-left: auto; text-align: right; }
-
-/* ─── Mobile ───────────────────────────────────────────────── */
 
 @media (max-width: 768px) {
   body { padding-left: 0; }
@@ -866,8 +820,6 @@ body {
   .help-article h1 { font-size: 28px; }
 }
 
-/* ─── Skip Link (a11y) ─────────────────────────────────────── */
-
 .help-skip-link {
   position: fixed;
   top: -48px;
@@ -887,8 +839,6 @@ body {
 
 .help-skip-link:focus { top: 12px; }
 
-/* ─── Reduced Motion ───────────────────────────────────────── */
-
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -898,14 +848,11 @@ body {
   }
 }
 
-/* ─── Backdrop-Filter Fallback ─────────────────────────────── */
-
+/* opaque fallback when backdrop-filter unsupported, else header/overlay become transparent */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .help-header { background: var(--help-bg); }
   .help-sidebar-overlay { background: rgba(0,0,0,0.6); }
 }
-
-/* ─── Print ────────────────────────────────────────────────── */
 
 @media print {
   body { padding: 0; }
