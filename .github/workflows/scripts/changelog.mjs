@@ -135,10 +135,20 @@ try {
   changelog = '# Changelog\n\n## [Unreleased]\n';
 }
 
-// Skip if entry for this version already present
+// Skip if entry for this version already present — and prefer the existing
+// (manually curated) entry as the release body so a hand-written changelog wins
+// over the auto-generated bullet list.
 const versionHeading = `## [${versionLabel}]`;
 if (changelog.includes(versionHeading)) {
-  console.log(`CHANGELOG.md already contains ${versionHeading}, skipping insert.`);
+  console.log(`CHANGELOG.md already contains ${versionHeading}, using it as release body.`);
+  const sectionRe = new RegExp(
+    String.raw`(##\s*\[${versionLabel.replace(/\./g, '\\.')}\][\s\S]*?)(?=\n##\s*\[|\[Unreleased\]:|$)`,
+    'm'
+  );
+  const m = changelog.match(sectionRe);
+  if (m && m[1].trim()) {
+    entry = m[1].trim() + '\n';
+  }
 } else {
   const unreleasedRe = /(##\s*\[Unreleased\][^\n]*\n)/i;
   if (unreleasedRe.test(changelog)) {
