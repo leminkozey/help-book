@@ -82,7 +82,8 @@ The installer:
 If you don't want to run a remote script, grab the ZIP for the latest release:
 
 ```bash
-TAG=$(curl -fsSL https://api.github.com/repos/leminkozey/help-book/releases/latest | jq -r .tag_name)
+TAG=$(curl -fsSL https://api.github.com/repos/leminkozey/help-book/releases/latest \
+      | grep -m1 '"tag_name"' | cut -d'"' -f4)
 curl -LO "https://github.com/leminkozey/help-book/releases/download/$TAG/help-book-$TAG.zip"
 unzip -n "help-book-$TAG.zip" -d help/   # -n: never overwrite existing files
 ```
