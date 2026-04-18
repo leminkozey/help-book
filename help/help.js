@@ -6,10 +6,15 @@
   'use strict';
 
   var chapters = [];      // flat list of { id, title, file }
-  var chapterTexts = {};  // id → raw markdown text (for search)
+  // chapterTexts holds raw markdown for every chapter to enable instant
+  // client-side full-text search. Memory cost is intentional: search needs
+  // the full text and dropping entries would force re-fetches per query.
+  var chapterTexts = Object.create(null);  // id → raw markdown text (for search)
   var currentId = null;
   var chaptersReady = false;
   var activeNavEl = null; // cached active sidebar element
+  var initialExpandDone = false; // expandParents only on first navigate
+  var scrollHeadingTimer = null; // handle for scrollToHeading lock timeout
 
   // ─── DOM refs ──────────────────────────────────────────────
 
@@ -24,12 +29,15 @@
   var $theme    = document.querySelector('.help-theme-toggle');
   var $search   = document.querySelector('.help-search');
   var $results  = document.querySelector('.help-search-results');
+  var $main     = document.querySelector('main');
 
   // ─── Init ──────────────────────────────────────────────────
 
   initTheme();
   configureMarked();
   loadConfig();
+  initArticleDelegation();
+  initTocDelegation();
 
   function configureMarked() {
     marked.setOptions({
@@ -51,7 +59,7 @@
         return r.json();
       })
       .then(function (data) {
-        if (data.accent) {
+        if (data.accent && /^#[0-9a-f]{3,8}$|^(rgb|hsl|oklch)\(/i.test(data.accent)) {
           document.documentElement.style.setProperty('--help-accent', data.accent);
         }
         $title.textContent = data.title || 'Help';
@@ -60,7 +68,7 @@
         flattenChapters(data.chapters);
         preloadChapters();
         navigateFromHash();
-        $footer.innerHTML = 'made by <a href="https://leminkozey.me" target="_blank">leminkozey</a>' +
+        $footer.innerHTML = 'made by <a href="https://leminkozey.me" target="_blank" rel="noopener noreferrer">leminkozey</a>' +
           (data.version ? ' &middot; ' + escapeHtml(data.version) : '');
       })
       .catch(function () {
@@ -77,19 +85,28 @@
       if (item.children && item.children.length > 0) {
         var btn = document.createElement('button');
         btn.className = 'help-nav-item help-nav-group-toggle';
+        btn.setAttribute('aria-expanded', 'false');
         btn.innerHTML = '<svg class="chevron" width="12" height="12" viewBox="0 0 12 12" fill="currentColor"><path d="M4 2l4 4-4 4"/></svg> ' + escapeHtml(item.title);
         if (item.file) btn.dataset.id = item.id;
+        var ul = document.createElement('ul');
+        ul.className = 'help-nav-children';
         btn.addEventListener('click', function (e) {
-          btn.classList.toggle('expanded');
-          ul.classList.toggle('expanded');
-          if (item.file && !e.target.closest('.chevron')) {
+          var clickedChevron = !!e.target.closest('.chevron');
+          if (clickedChevron || !item.file) {
+            // Chevron click (or group without own file): toggle only
+            var expanded = btn.classList.toggle('expanded');
+            ul.classList.toggle('expanded');
+            btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+          } else {
+            // Label click on group with file: navigate + expand
+            btn.classList.add('expanded');
+            ul.classList.add('expanded');
+            btn.setAttribute('aria-expanded', 'true');
             navigate(item.id);
           }
         });
         li.appendChild(btn);
 
-        var ul = document.createElement('ul');
-        ul.className = 'help-nav-children';
         buildNav(item.children, ul);
         li.appendChild(ul);
       } else {
@@ -113,13 +130,28 @@
 
   function flattenChapters(items) {
     items.forEach(function (item) {
-      if (item.file) {
+      if (item.file && isSafeChapterFile(item.file)) {
         chapters.push({ id: item.id, title: item.title, file: item.file });
       }
       if (item.children) {
         flattenChapters(item.children);
       }
     });
+  }
+
+  function isSafeChapterFile(file) {
+    if (typeof file !== 'string') return false;
+    if (!/^[\w./-]+\.md$/.test(file)) return false;
+    // Reject path traversal that escapes the docs root
+    var parts = file.split('/');
+    var depth = 0;
+    for (var i = 0; i < parts.length; i++) {
+      var p = parts[i];
+      if (p === '' || p === '.') continue;
+      if (p === '..') { depth--; if (depth < 0) return false; }
+      else depth++;
+    }
+    return true;
   }
 
   // ─── Preload chapter texts for search ──────────────────────
@@ -141,7 +173,10 @@
     var el = $nav.querySelector('[data-id="' + CSS.escape(id) + '"]');
     if (el) {
       el.classList.add('active');
-      expandParents(el);
+      if (!initialExpandDone) {
+        expandParents(el);
+        initialExpandDone = true;
+      }
       activeNavEl = el;
     }
   }
@@ -153,11 +188,16 @@
       return;
     }
 
+    // Set currentId BEFORE updating hash so the hashchange handler can
+    // bail out without triggering a redundant fetch.
     currentId = id;
-    window.location.hash = id;
+    if (window.location.hash.slice(1) !== id) {
+      window.location.hash = id;
+    }
     closeSidebar();
     setActiveNav(id);
 
+    var navId = id; // snapshot for race-condition guard
     var cached = chapterTexts[id];
     var promise = cached
       ? Promise.resolve(cached)
@@ -166,13 +206,22 @@
 
     promise
       .then(function (md) {
+        // Bail if the user navigated elsewhere while the fetch was in flight
+        if (navId !== currentId) return;
         chapterTexts[id] = md;
+        // Lock scroll spy BEFORE programmatic scroll so the IntersectionObserver
+        // doesn't flip "active" H2 to a random heading mid-render.
+        scrollSpyLocked = true;
         renderMarkdown(md);
         buildToc();
         buildPrevNext();
         window.scrollTo(0, 0);
+        if ($main && typeof $main.focus === 'function') {
+          $main.focus({ preventScroll: true });
+        }
       })
       .catch(function () {
+        if (navId !== currentId) return;
         $article.innerHTML = '<p>Failed to load chapter.</p>';
       });
   }
@@ -184,6 +233,7 @@
       var toggle = parent.previousElementSibling;
       if (toggle && toggle.classList.contains('help-nav-group-toggle')) {
         toggle.classList.add('expanded');
+        toggle.setAttribute('aria-expanded', 'true');
       }
       parent = parent.parentElement.closest('.help-nav-children');
     }
@@ -206,10 +256,20 @@
   // ─── Markdown Rendering ────────────────────────────────────
 
   function renderMarkdown(md) {
-    $article.innerHTML = DOMPurify.sanitize(marked.parse(md));
+    var clean = DOMPurify.sanitize(marked.parse(md), {
+      ALLOWED_URI_REGEXP: /^(?:https?|mailto|tel|#|\/|\.\/|\.\.\/)/i,
+      FORBID_TAGS: ['svg', 'math', 'form', 'iframe', 'object', 'embed'],
+      FORBID_ATTR: ['style'],
+      ADD_ATTR: ['target', 'rel'],
+    });
+    $article.innerHTML = clean;
+
+    // TODO: Demote first H1 to H2 to avoid multiple H1s per SPA view.
+    // Skipped: existing chapter styles target h1 explicitly and rewriting
+    // could break visual hierarchy. Revisit when CSS is audited.
 
     // Add IDs to headings for TOC links (deduplicate)
-    var usedIds = {};
+    var usedIds = Object.create(null);
     var headings = $article.querySelectorAll('h1, h2, h3, h4');
     headings.forEach(function (h) {
       if (!h.id) {
@@ -225,21 +285,32 @@
       usedIds[h.id] = true;
     });
 
-    // Add copy buttons to code blocks
+    // Add copy buttons to code blocks (click handler is delegated on $article)
     var pres = $article.querySelectorAll('pre');
     pres.forEach(function (pre) {
       var btn = document.createElement('button');
       btn.className = 'help-copy-btn';
+      btn.type = 'button';
       btn.textContent = 'Copy';
-      btn.addEventListener('click', function () {
-        var code = pre.querySelector('code');
-        var text = code ? code.textContent : pre.textContent;
+      pre.appendChild(btn);
+    });
+  }
+
+  function initArticleDelegation() {
+    if (!$article) return;
+    $article.addEventListener('click', function (e) {
+      var btn = e.target.closest('.help-copy-btn');
+      if (!btn || !$article.contains(btn)) return;
+      var pre = btn.closest('pre');
+      if (!pre) return;
+      var code = pre.querySelector('code');
+      var text = code ? code.textContent : pre.textContent;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text).then(function () {
           btn.textContent = 'Copied!';
           setTimeout(function () { btn.textContent = 'Copy'; }, 1500);
         });
-      });
-      pre.appendChild(btn);
+      }
     });
   }
 
@@ -247,18 +318,18 @@
 
   var tocObserver = null;
   var tocLinks = [];  // cached for scroll spy
-  var tocLinkMap = {}; // id → link element for O(1) scroll spy lookup
+  var tocLinkMap = Object.create(null); // id → link element for O(1) scroll spy lookup
   var activeTocLink = null;
   var scrollSpyLocked = false;
 
-  var STICKY_OFFSET = 92; // header (56) + toc bar (36)
+  var STICKY_OFFSET = 92; // header (56) + toc bar (36) — fallback only
+  var HEADER_HEIGHT = 56;
 
   function buildToc() {
     if (tocObserver) { tocObserver.disconnect(); tocObserver = null; }
     tocLinks = [];
-    tocLinkMap = {};
+    tocLinkMap = Object.create(null);
     activeTocLink = null;
-    scrollSpyLocked = false;
 
     var headings = $article.querySelectorAll('h2');
     if (headings.length < 2) {
@@ -272,12 +343,8 @@
     headings.forEach(function (h) {
       var a = document.createElement('a');
       a.href = '#' + h.id;
+      a.dataset.headingId = h.id;
       a.innerHTML = '<span class="toc-dot"></span>' + escapeHtml(h.textContent);
-      a.addEventListener('click', function (e) {
-        e.preventDefault();
-        setActiveTocLink(a);
-        scrollToHeading(h.id);
-      });
       inner.appendChild(a);
       tocLinks.push(a);
       tocLinkMap[h.id] = a;
@@ -290,14 +357,30 @@
     initScrollSpy(headings);
   }
 
+  function initTocDelegation() {
+    if (!$toc) return;
+    $toc.addEventListener('click', function (e) {
+      var a = e.target.closest('a[data-heading-id]');
+      if (!a || !$toc.contains(a)) return;
+      e.preventDefault();
+      setActiveTocLink(a);
+      scrollToHeading(a.dataset.headingId);
+    });
+  }
+
   function scrollToHeading(id) {
     var target = document.getElementById(id);
     if (!target) return;
     // Lock scroll spy during programmatic scroll to prevent flickering
     scrollSpyLocked = true;
-    var top = target.getBoundingClientRect().top + window.scrollY - STICKY_OFFSET - 8;
+    if (scrollHeadingTimer) clearTimeout(scrollHeadingTimer);
+    var dynamicOffset = ($toc && $toc.classList.contains('active') ? $toc.offsetHeight : 0) + HEADER_HEIGHT;
+    var top = target.getBoundingClientRect().top + window.scrollY - dynamicOffset - 8;
     window.scrollTo({ top: top, behavior: 'smooth' });
-    setTimeout(function () { scrollSpyLocked = false; }, 600);
+    scrollHeadingTimer = setTimeout(function () {
+      scrollSpyLocked = false;
+      scrollHeadingTimer = null;
+    }, 600);
   }
 
   function setActiveTocLink(link) {
@@ -329,6 +412,12 @@
     }, { rootMargin: '-' + STICKY_OFFSET + 'px 0px -60% 0px' });
 
     headings.forEach(function (h) { tocObserver.observe(h); });
+
+    // Release the scroll-spy lock that navigate() set, after the layout
+    // has settled (post scrollTo(0,0)).
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { scrollSpyLocked = false; });
+    });
   }
 
   // ─── Prev / Next ───────────────────────────────────────────
@@ -364,10 +453,17 @@
 
   $search.addEventListener('input', function () {
     clearTimeout(searchTimeout);
-    var q = $search.value.trim().toLowerCase();
+    var raw = $search.value.trim();
+    if (raw.length > 200) raw = raw.slice(0, 200);
+    var q = raw.toLocaleLowerCase('de');
     if (q.length < 2) {
       $results.classList.remove('active');
       $results.innerHTML = '';
+      return;
+    }
+    if (!chaptersReady) {
+      $results.innerHTML = '<div class="help-search-empty">Indexing…</div>';
+      $results.classList.add('active');
       return;
     }
     searchTimeout = setTimeout(function () { performSearch(q); }, 150);
@@ -377,6 +473,7 @@
     if (e.key === 'Escape') {
       $search.value = '';
       $results.classList.remove('active');
+      $search.blur();
     }
   });
 
@@ -404,7 +501,7 @@
 
     chapters.forEach(function (ch) {
       var text = chapterTexts[ch.id] || '';
-      var lower = text.toLowerCase();
+      var lower = text.toLocaleLowerCase('de');
       var idx = lower.indexOf(query);
       if (idx === -1) return;
 
@@ -437,14 +534,20 @@
   // ─── Sidebar Toggle (Mobile) ───────────────────────────────
 
   $toggle.addEventListener('click', function () {
-    $sidebar.classList.toggle('open');
+    var open = $sidebar.classList.toggle('open');
+    $toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
   });
 
   $overlay.addEventListener('click', closeSidebar);
 
   function closeSidebar() {
     $sidebar.classList.remove('open');
+    if ($toggle) $toggle.setAttribute('aria-expanded', 'false');
   }
+
+  window.addEventListener('resize', function () {
+    if (window.innerWidth > 768) closeSidebar();
+  });
 
   // ─── Theme Toggle ─────────────────────────────────────────
 
@@ -455,34 +558,57 @@
     if (darkSheet) darkSheet.disabled = !dark;
   }
 
+  function applyTheme(theme) {
+    var dark = theme === 'dark';
+    if (dark) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+    setHljsTheme(dark);
+    if ($theme) $theme.setAttribute('aria-pressed', dark ? 'true' : 'false');
+  }
+
   function initTheme() {
     var saved = localStorage.getItem('help-theme');
     var dark = saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    if (dark) {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    }
-    setHljsTheme(dark);
+    applyTheme(dark ? 'dark' : 'light');
   }
 
   $theme.addEventListener('click', function () {
     var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    if (isDark) {
-      document.documentElement.removeAttribute('data-theme');
-      localStorage.setItem('help-theme', 'light');
-      setHljsTheme(false);
-    } else {
-      document.documentElement.setAttribute('data-theme', 'dark');
-      localStorage.setItem('help-theme', 'dark');
-      setHljsTheme(true);
-    }
+    var next = isDark ? 'light' : 'dark';
+    localStorage.setItem('help-theme', next);
+    applyTheme(next);
+  });
+
+  // Follow OS preference if user hasn't picked one explicitly
+  var mql = window.matchMedia('(prefers-color-scheme: dark)');
+  if (mql && typeof mql.addEventListener === 'function') {
+    mql.addEventListener('change', function (e) {
+      if (!localStorage.getItem('help-theme')) applyTheme(e.matches ? 'dark' : 'light');
+    });
+  }
+
+  // Cross-tab theme sync
+  window.addEventListener('storage', function (e) {
+    if (e.key === 'help-theme') applyTheme(e.newValue === 'dark' ? 'dark' : 'light');
   });
 
   // ─── Keyboard Shortcuts ────────────────────────────────────
 
   document.addEventListener('keydown', function (e) {
     if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+      var t = e.target;
+      // Allow Cmd+K from inside our own search input; skip if typing elsewhere
+      if (t && t !== $search && t.matches && t.matches('input,textarea,[contenteditable],[contenteditable="true"]')) {
+        return;
+      }
       e.preventDefault();
       $search.focus();
+    }
+    if (e.key === 'Escape' && $sidebar && $sidebar.classList.contains('open')) {
+      closeSidebar();
     }
   });
 
