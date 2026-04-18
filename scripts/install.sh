@@ -53,7 +53,7 @@ if [ "$MODE" = "install" ]; then
 {
   "title": "My Project Help",
   "version": "v1.0.0",
-  "accent": "#18E299",
+  "accent": "#e8791d",
   "chapters": [
     { "id": "getting-started", "title": "Getting Started", "file": "chapters/01-getting-started.md" }
   ]
