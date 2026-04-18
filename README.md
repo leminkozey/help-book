@@ -79,14 +79,18 @@ The installer:
 
 ### Manual download
 
-If you don't want to run a remote script, grab the ZIP from any [release](https://github.com/leminkozey/help-book/releases):
+If you don't want to run a remote script, grab the ZIP for the latest release:
 
 ```bash
-curl -LO https://github.com/leminkozey/help-book/releases/latest/download/help-book-v2.0.0.zip
-unzip help-book-v2.0.0.zip -d help/
+TAG=$(curl -fsSL https://api.github.com/repos/leminkozey/help-book/releases/latest \
+      | grep -m1 '"tag_name"' | cut -d'"' -f4)
+curl -LO "https://github.com/leminkozey/help-book/releases/download/$TAG/help-book-$TAG.zip"
+unzip -n "help-book-$TAG.zip" -d help/   # -n: never overwrite existing files
 ```
 
-The ZIP contains only the three code files — keep your existing `chapters.json` and `chapters/` directory intact.
+Or pin a specific version manually from the [releases page](https://github.com/leminkozey/help-book/releases) — the asset is always named `help-book-vX.Y.Z.zip`.
+
+> The ZIP intentionally contains **only the three code files** (`index.html`, `help.css`, `help.js`). Your `chapters.json` and anything in `chapters/` is never overwritten — `unzip -n` is belt-and-suspenders against future archive changes.
 
 ### Final layout
 
