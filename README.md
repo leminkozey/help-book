@@ -34,19 +34,13 @@ Copy the `help/` folder into your project, edit `chapters.json`, write markdown 
 
 ## Quick Start
 
-```
-your-project/
-  help/
-    index.html
-    help.css
-    help.js
-    chapters.json
-    chapters/
-      01-getting-started.md
-      02-configuration.md
+One line, in your project root:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/leminkozey/help-book/main/scripts/install.sh | bash
 ```
 
-Serve the `help/` directory with any static file server:
+This drops a ready-to-edit `help/` folder next to where you ran it (with starter `chapters.json` + one demo chapter). Then serve it with any static file server:
 
 ```bash
 cd help && python3 -m http.server 8082
@@ -62,6 +56,49 @@ app.use('/help', express.static('help', {
   redirect: false,
   index: 'index.html'
 }));
+```
+
+### Install / Update Options
+
+```bash
+# Pin a specific version
+curl -fsSL https://raw.githubusercontent.com/leminkozey/help-book/main/scripts/install.sh | bash -s v2.0.0
+
+# Custom target directory (default: ./help)
+HELP_BOOK_DIR=public/docs curl -fsSL https://raw.githubusercontent.com/leminkozey/help-book/main/scripts/install.sh | bash
+
+# Update an existing install (re-run the same command — auto-detects)
+curl -fsSL https://raw.githubusercontent.com/leminkozey/help-book/main/scripts/install.sh | bash
+```
+
+The installer:
+- **First run** — drops `index.html`, `help.css`, `help.js` plus a starter `chapters.json` + `chapters/01-getting-started.md`.
+- **Subsequent runs** — overwrites only the three code files. Your `chapters.json` and any markdown in `chapters/` is left untouched.
+
+> **Prefer to inspect first?** `curl -fsSL .../install.sh -o install.sh && less install.sh && bash install.sh`
+
+### Manual download
+
+If you don't want to run a remote script, grab the ZIP from any [release](https://github.com/leminkozey/help-book/releases):
+
+```bash
+curl -LO https://github.com/leminkozey/help-book/releases/latest/download/help-book-v2.0.0.zip
+unzip help-book-v2.0.0.zip -d help/
+```
+
+The ZIP contains only the three code files — keep your existing `chapters.json` and `chapters/` directory intact.
+
+### Final layout
+
+```
+your-project/
+  help/
+    index.html       # ← managed by installer
+    help.css         # ← managed by installer
+    help.js          # ← managed by installer
+    chapters.json    # ← yours: edit freely
+    chapters/        # ← yours: edit freely
+      01-getting-started.md
 ```
 
 ## Configuration

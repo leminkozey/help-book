@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `scripts/install.sh` — one-line installer/updater for downstream projects (`curl ... | bash`)
+- Release workflow now publishes a code-only ZIP asset (`help-book-vX.Y.Z.zip`) on every tag, containing only `index.html`, `help.css`, `help.js`
+- README documents install, version-pinned install, custom target dir, manual ZIP download, and inspect-before-run flow
+
 ## [2.0.0] - 2026-04-18
 
 ### Changed (BREAKING)

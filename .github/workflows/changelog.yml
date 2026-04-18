@@ -86,6 +86,20 @@ jobs:
               --title "${{ steps.tags.outputs.current }}"
           fi
 
+      - name: Build update ZIP (code-only)
+        run: |
+          ZIP="$RUNNER_TEMP/help-book-${{ steps.tags.outputs.current }}.zip"
+          (cd help && zip -q "$ZIP" index.html help.css help.js)
+          echo "Built $(basename "$ZIP") ($(stat -c%s "$ZIP" 2>/dev/null || stat -f%z "$ZIP") bytes)"
+
+      - name: Upload ZIP asset to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ steps.tags.outputs.current }}" \
+            "$RUNNER_TEMP/help-book-${{ steps.tags.outputs.current }}.zip" \
+            --clobber
+
       - name: Close referenced issues
         if: hashFiles(format('{0}/closing-issues.txt', runner.temp)) != ''
         env:
