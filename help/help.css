@@ -106,6 +106,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  padding-top: var(--help-header-h);
   padding-left: calc(var(--help-sidebar-w) + 24px);
   transition: background 0.2s, color 0.2s;
 }
@@ -130,15 +131,17 @@ body {
 /* ─── Header ───────────────────────────────────────────────── */
 
 .help-header {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 100;
   display: flex;
   align-items: center;
   gap: 12px;
   height: var(--help-header-h);
   padding: 0 24px;
-  padding-left: max(24px, env(safe-area-inset-left));
+  padding-left: calc(var(--help-sidebar-w) + 36px);
   padding-right: max(24px, env(safe-area-inset-right));
   background: var(--help-header-bg);
   backdrop-filter: blur(20px) saturate(180%);
@@ -329,7 +332,7 @@ body {
   padding: 16px 12px;
   overflow-y: auto;
   box-shadow: var(--help-shadow-card);
-  z-index: 110;
+  z-index: 200;
   transition: background 0.2s;
 }
 
@@ -415,7 +418,6 @@ body {
 .help-content {
   min-width: 0;
   padding: 28px 48px 64px 16px;
-  max-width: var(--help-content-max);
   outline: none;
 }
 
@@ -799,6 +801,10 @@ body {
 
 @media (max-width: 768px) {
   body { padding-left: 0; }
+
+  .help-header {
+    padding-left: max(16px, env(safe-area-inset-left));
+  }
 
   .help-sidebar-toggle { display: flex; }
 
