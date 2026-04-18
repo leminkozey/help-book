@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-04-18
+
 ### Added
 - `scripts/install.sh` — one-line installer/updater for downstream projects (`curl ... | bash`)
 - Release workflow publishes a code-only ZIP asset (`help-book-vX.Y.Z.zip`) on every tag, containing only `index.html`, `help.css`, `help.js`
@@ -21,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Code cleanup: removed decorative section-header comments across `help.js`, `help.css`, `changelog.mjs`; kept WHY-comments
 
 ### Fixed
+- Five hard-coded `rgba(24,226,153,...)` (green) sites in `help.css` — selection, search-glow, code-highlight, sidebar-active and TOC-active backgrounds now use the orange accent
 - changelog.mjs: removed dead `BODY_REF_RE` loop
 - changelog.mjs: resolve `CHANGELOG.md` against `GITHUB_WORKSPACE` (CWD fallback) so local invocation from a subdir writes to the right path
 
@@ -116,7 +119,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Light mode code blocks and prev/next navigation bug
 - Dark mode: neutral gray/black instead of blue-tinted Catppuccin
 
-[Unreleased]: https://github.com/leminkozey/help-book/compare/v2.0.0...HEAD
+[Unreleased]: https://github.com/leminkozey/help-book/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/leminkozey/help-book/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/leminkozey/help-book/compare/v1.1.0...v2.0.0
 [1.1.0]: https://github.com/leminkozey/help-book/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/leminkozey/help-book/releases/tag/v1.0.0
