@@ -13,25 +13,44 @@ on:
 permissions:
   contents: write
   issues: write
-  pull-requests: write
 
 jobs:
   changelog:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout (full history needed for git log)
+      - name: Checkout main (full history + all tags needed)
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           ref: main
 
+      - name: Validate workflow_dispatch tag input
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
+            echo "::error::invalid tag format: '$TAG' (expected vX.Y.Z[-pre])"
+            exit 1
+          fi
+
       - name: Resolve current and previous tag
         id: tags
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          DISPATCH_TAG: ${{ inputs.tag }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            CURRENT="${{ github.event.inputs.tag }}"
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            CURRENT="$DISPATCH_TAG"
           else
             CURRENT="${GITHUB_REF#refs/tags/}"
+          fi
+          # defense in depth: validate tag-push too — git enforces tag-name chars but be explicit
+          if ! [[ "$CURRENT" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]; then
+            echo "::error::invalid tag format: '$CURRENT'"
+            exit 1
           fi
           PREVIOUS=$(git tag --sort=-v:refname | grep -v "^${CURRENT}$" | head -n1 || true)
           if [ -z "$PREVIOUS" ]; then
@@ -48,15 +67,37 @@ jobs:
         id: gen
         env:
           REPO_URL: https://github.com/${{ github.repository }}
+          RANGE: ${{ steps.tags.outputs.range }}
+          TAG: ${{ steps.tags.outputs.current }}
+          PREVIOUS: ${{ steps.tags.outputs.previous }}
         run: |
+          set -euo pipefail
           node .github/workflows/scripts/changelog.mjs \
-            --range "${{ steps.tags.outputs.range }}" \
-            --tag "${{ steps.tags.outputs.current }}" \
-            --previous "${{ steps.tags.outputs.previous }}" \
+            --range "$RANGE" \
+            --tag "$TAG" \
+            --previous "$PREVIOUS" \
             --repo "$REPO_URL"
 
-      - name: Commit updated CHANGELOG.md
+      - name: Build update ZIP from tag state (code-only)
+        env:
+          TAG: ${{ steps.tags.outputs.current }}
         run: |
+          set -euo pipefail
+          # ZIP must reflect tag commit, not main HEAD — extract tag state separately
+          SRC="$RUNNER_TEMP/help-zip-src"
+          rm -rf "$SRC"
+          mkdir -p "$SRC"
+          git archive "$TAG" --format=tar --prefix=root/ | tar -x -C "$SRC"
+          ZIP="$RUNNER_TEMP/help-book-${TAG}.zip"
+          (cd "$SRC/root/help" && zip -q "$ZIP" index.html help.css help.js)
+          test -f "$ZIP" || { echo "::error::ZIP build failed"; exit 1; }
+          echo "Built $(basename "$ZIP") ($(stat -c%s "$ZIP") bytes)"
+
+      - name: Commit updated CHANGELOG.md (with retry)
+        env:
+          TAG: ${{ steps.tags.outputs.current }}
+        run: |
+          set -euo pipefail
           if git diff --quiet CHANGELOG.md; then
             echo "CHANGELOG.md unchanged, skipping commit"
             exit 0
@@ -64,52 +105,56 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add CHANGELOG.md
-          git commit -m "docs(changelog): release ${{ steps.tags.outputs.current }}"
-          git push origin main
+          git commit -m "docs(changelog): release ${TAG}"
+          # retry on race with parallel pushes to main
+          for attempt in 1 2 3; do
+            if git pull --rebase origin main && git push origin main; then
+              echo "Push succeeded on attempt ${attempt}"
+              exit 0
+            fi
+            echo "Push attempt ${attempt} failed, retrying..."
+            sleep $((attempt * 2))
+          done
+          echo "::error::failed to push CHANGELOG after 3 attempts"
+          exit 1
 
-      - name: Create / update GitHub Release
+      - name: Create / update GitHub Release with ZIP asset
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.tags.outputs.current }}
         run: |
+          set -euo pipefail
           BODY_FILE="$RUNNER_TEMP/release-body.md"
+          ZIP="$RUNNER_TEMP/help-book-${TAG}.zip"
           if [ ! -f "$BODY_FILE" ]; then
-            echo "release-body.md missing — generator step failed?" >&2
+            echo "::error::release-body.md missing — generator step failed?"
             exit 1
           fi
-          if gh release view "${{ steps.tags.outputs.current }}" >/dev/null 2>&1; then
-            gh release edit "${{ steps.tags.outputs.current }}" \
-              --notes-file "$BODY_FILE" \
-              --title "${{ steps.tags.outputs.current }}"
-          else
-            gh release create "${{ steps.tags.outputs.current }}" \
-              --notes-file "$BODY_FILE" \
-              --title "${{ steps.tags.outputs.current }}"
+          if [ ! -f "$ZIP" ]; then
+            echo "::error::ZIP asset missing — build step failed?"
+            exit 1
           fi
-
-      - name: Build update ZIP (code-only)
-        run: |
-          ZIP="$RUNNER_TEMP/help-book-${{ steps.tags.outputs.current }}.zip"
-          (cd help && zip -q "$ZIP" index.html help.css help.js)
-          echo "Built $(basename "$ZIP") ($(stat -c%s "$ZIP" 2>/dev/null || stat -f%z "$ZIP") bytes)"
-
-      - name: Upload ZIP asset to release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release upload "${{ steps.tags.outputs.current }}" \
-            "$RUNNER_TEMP/help-book-${{ steps.tags.outputs.current }}.zip" \
-            --clobber
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --notes-file "$BODY_FILE" --title "$TAG"
+            gh release upload "$TAG" "$ZIP" --clobber
+          else
+            # atomic: release + asset in one call (avoids release-without-asset on upload failure)
+            gh release create "$TAG" "$ZIP" --notes-file "$BODY_FILE" --title "$TAG"
+          fi
 
       - name: Close referenced issues
         if: hashFiles(format('{0}/closing-issues.txt', runner.temp)) != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.tags.outputs.current }}
+          REPO: ${{ github.repository }}
         run: |
+          set -euo pipefail
           while IFS=$'\t' read -r ISSUE COMMIT; do
             [ -z "$ISSUE" ] && continue
             echo "Closing issue #${ISSUE} (referenced by ${COMMIT})"
             gh issue close "$ISSUE" \
               --reason completed \
-              --comment "Released in [${{ steps.tags.outputs.current }}](https://github.com/${{ github.repository }}/releases/tag/${{ steps.tags.outputs.current }}) via ${COMMIT}." \
+              --comment "Released in [${TAG}](https://github.com/${REPO}/releases/tag/${TAG}) via ${COMMIT}." \
               || echo "  (failed — issue may not exist or already closed)"
           done < "$RUNNER_TEMP/closing-issues.txt"
