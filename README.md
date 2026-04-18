@@ -1,20 +1,36 @@
 # Help Book
 
-A standalone, drop-in documentation system for any web project. No build step, no npm, no framework — just static files.
+[![Release](https://img.shields.io/github/v/release/leminkozey/help-book?label=release&color=18E299)](https://github.com/leminkozey/help-book/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-18E299)](#license)
+[![No Build Step](https://img.shields.io/badge/build-none-18E299)](#)
+[![Vanilla JS](https://img.shields.io/badge/vanilla-JS-18E299)](#)
+
+A standalone, drop-in documentation system for any web project. No build step, no npm, no framework — just static files. Mintlify-inspired aesthetic, macOS-Settings layout, dark mode out of the box.
+
+> **Live demo:** https://leminkozey.github.io/help-book/help/
+
+## Preview
+
+| Light | Dark |
+|---|---|
+| ![Light mode](screenshots/light.png) | ![Dark mode](screenshots/dark.png) |
 
 ## What it does
 
 Copy the `help/` folder into your project, edit `chapters.json`, write markdown — done. Your project has a full documentation site.
 
 **Features:**
-- Sidebar navigation with nested chapters
-- Sticky TOC bar for in-page sections
-- Full-text search across all chapters (`Ctrl+K` / `Cmd+K`)
-- Dark / light theme with system preference detection
-- Syntax highlighting with copy buttons on code blocks
+- Floating sidebar (macOS-Settings style) with auto-expanding nested chapters
+- Inline TOC navigator in the sticky header (with scroll-spy)
+- Full-text search across all chapters (`Ctrl+K` / `Cmd+K`), locale-aware, with indexing state
+- Light / dark theme — follows system preference, syncs across tabs, no flash on first paint
+- Inter typography + Geist Mono code labels (loaded from Google Fonts)
+- Mintlify brand-green accent — overridable per-project via `chapters.json`
+- Pill-shaped search and copy buttons; subtle 5%-opacity borders
+- Syntax highlighting (highlight.js) with copy-to-clipboard
 - Previous / next chapter navigation
-- Mobile responsive
-- Customizable accent color per project
+- Mobile responsive with safe-area insets (iPhone notch aware)
+- Accessible: skip-link, ARIA combobox search, keyboard navigation, `prefers-reduced-motion`
 
 ## Quick Start
 
@@ -41,7 +57,11 @@ cd help && python3 -m http.server 8082
 Or with Express:
 
 ```javascript
-app.use('/help', express.static('help'));
+app.use('/help', express.static('help', {
+  dotfiles: 'deny',
+  redirect: false,
+  index: 'index.html'
+}));
 ```
 
 ## Configuration
@@ -52,7 +72,7 @@ Everything is configured in `chapters.json`:
 {
   "title": "My Project Help",
   "version": "v1.0.0",
-  "accent": "#3b82f6",
+  "accent": "#18E299",
   "chapters": [
     {
       "id": "intro",
@@ -78,7 +98,7 @@ Everything is configured in `chapters.json`:
 |----------|-------------|
 | `title` | Header and browser tab title |
 | `version` | Shown in footer (optional) |
-| `accent` | CSS accent color (default: `#e8791d`) |
+| `accent` | CSS accent color — accepts hex, `rgb(...)`, `hsl(...)`, `oklch(...)` (default: Mintlify green `#18E299`) |
 | `chapters` | Ordered list of chapter objects |
 
 Chapters can be nested one level deep. Parent chapters can optionally have their own `file`.
@@ -90,42 +110,45 @@ Override CSS variables in `help.css` for deeper customization:
 ```css
 :root {
   --help-accent: #3b82f6;
-  --help-bg: #fafafa;
-  --help-sidebar-bg: #f0f0f0;
+  --help-bg: #f5f5f7;
+  --help-card-bg: #ffffff;
+  --help-sidebar-w: 280px;
 }
 ```
 
-## Requirements
-
-- A modern browser
-- A static file server
-- That's it
+Dark mode follows the user's `prefers-color-scheme` by default. The user's manual choice is stored in `localStorage` and synced across tabs via the `storage` event. When storage is cleared, the system preference takes over again.
 
 ## Security
 
-**Production headers** — set these on your reverse proxy at minimum:
+The library renders user-supplied Markdown — sanitization is critical. Built-in protections:
+
+- **DOMPurify** with explicit allow-lists (no `<script>`, `<svg>`, `<form>`, `<iframe>`; URI scheme whitelist; controlled `target`/`rel`)
+- **`chapters.json` validation** — `accent` must match a CSS color regex; `chapter.file` must match a path regex with traversal-depth guard
+- **CSP `<meta>`** with strict allow-list; FOUC-preventing inline script needs `'unsafe-inline'` for `script-src`
+- **SRI hashes** + `referrerpolicy="no-referrer"` on all CDN scripts
+- **`Object.create(null)`** maps to defeat prototype pollution
+
+For production deployments, set these HTTP headers via your reverse proxy:
 
 ```
 X-Content-Type-Options: nosniff
 X-Frame-Options: SAMEORIGIN
 Referrer-Policy: no-referrer
-Content-Security-Policy: default-src 'none'; script-src 'self' https://cdnjs.cloudflare.com 'unsafe-inline'; style-src 'self' https://cdnjs.cloudflare.com 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'
+Content-Security-Policy: default-src 'none'; script-src 'self' https://cdnjs.cloudflare.com 'unsafe-inline'; style-src 'self' https://cdnjs.cloudflare.com https://fonts.googleapis.com 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self' data: https://fonts.gstatic.com; base-uri 'none'; form-action 'none'; frame-ancestors 'self'
 ```
 
-**Harden the Express example** — `express.static` is permissive by default:
+Avoid symlinks inside `help/` — static servers may follow them and leak files outside the directory.
 
-```javascript
-app.use('/help', express.static('help', {
-  dotfiles: 'deny',
-  redirect: false,
-  index: 'index.html'
-}));
-```
+## Requirements
 
-**Avoid symlinks inside `help/`** — static servers follow them and can leak files outside the directory.
+- A modern browser (Chrome, Firefox, Safari, Edge)
+- A web server that can serve static files
+- Internet access for Google Fonts + cdnjs (or self-host them)
 
-**Trust your markdown sources** — chapters are rendered with DOMPurify and a strict allowlist, but untrusted markdown is still a risk (e.g. CSS injection via the accent color or other vectors). Do not drop user-generated markdown into `chapters/` without further review.
+## Releases
+
+Versioned via SemVer. Tagging a `v*.*.*` triggers a [GitHub Action](.github/workflows/changelog.yml) that generates `CHANGELOG.md` entries from Conventional Commits and creates a GitHub Release. See [`CHANGELOG.md`](CHANGELOG.md) for the full history.
 
 ## License
 
-MIT
+MIT — see [`CHANGELOG.md`](CHANGELOG.md) for what changed in each version.
