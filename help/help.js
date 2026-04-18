@@ -13,7 +13,6 @@
   var currentId = null;
   var chaptersReady = false;
   var activeNavEl = null; // cached active sidebar element
-  var initialExpandDone = false; // expandParents only on first navigate
   var scrollHeadingTimer = null; // handle for scrollToHeading lock timeout
 
   // ─── DOM refs ──────────────────────────────────────────────
@@ -173,10 +172,7 @@
     var el = $nav.querySelector('[data-id="' + CSS.escape(id) + '"]');
     if (el) {
       el.classList.add('active');
-      if (!initialExpandDone) {
-        expandParents(el);
-        initialExpandDone = true;
-      }
+      expandParents(el);
       activeNavEl = el;
     }
   }
