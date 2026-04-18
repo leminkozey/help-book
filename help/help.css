@@ -106,6 +106,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  padding-left: calc(var(--help-sidebar-w) + 24px);
   transition: background 0.2s, color 0.2s;
 }
 
@@ -311,35 +312,25 @@ body {
 /* ─── Layout ───────────────────────────────────────────────── */
 
 .help-layout {
-  display: flex;
-  gap: 12px;
-  padding: 12px;
+  display: block;
   min-height: calc(100dvh - var(--help-header-h));
 }
 
-.help-toc-bar.active ~ .help-layout {
-  min-height: calc(100dvh - var(--help-header-h) - var(--help-toc-h));
-}
-
-/* ─── Sidebar ──────────────────────────────────────────────── */
+/* ─── Sidebar (fixed full-height) ──────────────────────────── */
 
 .help-sidebar {
+  position: fixed;
+  top: 12px;
+  left: 12px;
   width: var(--help-sidebar-w);
-  min-width: var(--help-sidebar-w);
+  height: calc(100dvh - 24px);
   background: var(--help-sidebar-bg);
   border-radius: var(--help-radius-lg);
   padding: 16px 12px;
   overflow-y: auto;
-  position: sticky;
-  top: calc(var(--help-header-h) + 12px);
-  height: calc(100dvh - var(--help-header-h) - 24px);
   box-shadow: var(--help-shadow-card);
+  z-index: 110;
   transition: background 0.2s;
-}
-
-.help-toc-bar.active ~ .help-layout .help-sidebar {
-  top: calc(var(--help-header-h) + var(--help-toc-h) + 12px);
-  height: calc(100dvh - var(--help-header-h) - var(--help-toc-h) - 24px);
 }
 
 .help-sidebar-overlay {
@@ -422,39 +413,33 @@ body {
 /* ─── Content ──────────────────────────────────────────────── */
 
 .help-content {
-  flex: 1;
   min-width: 0;
-  padding: 28px 40px 64px;
-  max-width: calc(var(--help-content-max) + 80px);
+  padding: 28px 48px 64px 16px;
+  max-width: var(--help-content-max);
   outline: none;
-  margin: 0 auto;
 }
 
 /* ─── TOC Bar ──────────────────────────────────────────────── */
 
 .help-toc-bar {
   display: none;
-  position: sticky;
-  top: var(--help-header-h);
-  z-index: 90;
-  background: var(--help-toc-bg);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  padding: 0 24px;
+  flex: 1;
+  min-width: 0;
+  justify-content: center;
+  align-items: center;
   overflow-x: auto;
   overflow-y: hidden;
-  white-space: nowrap;
   scrollbar-width: none;
+  white-space: nowrap;
 }
 
 .help-toc-bar::-webkit-scrollbar { display: none; }
 
-.help-toc-bar.active { display: block; height: var(--help-toc-h); text-align: center; }
+.help-toc-bar.active { display: flex; }
 
 .help-toc-bar-inner {
   display: inline-flex;
   align-items: center;
-  height: var(--help-toc-h);
   white-space: nowrap;
   gap: 4px;
 }
@@ -526,7 +511,7 @@ body {
 .help-article h6 {
   color: var(--help-text);
   font-family: var(--help-font-sans);
-  scroll-margin-top: calc(var(--help-header-h) + var(--help-toc-h) + 16px);
+  scroll-margin-top: calc(var(--help-header-h) + 16px);
 }
 
 .help-article h1 {
@@ -813,28 +798,28 @@ body {
 /* ─── Mobile ───────────────────────────────────────────────── */
 
 @media (max-width: 768px) {
+  body { padding-left: 0; }
+
   .help-sidebar-toggle { display: flex; }
 
+  .help-toc-bar { display: none !important; }
+
   .help-sidebar {
-    position: fixed;
     left: 0;
-    top: var(--help-header-h);
-    height: calc(100dvh - var(--help-header-h));
-    z-index: 50;
+    top: 0;
+    height: 100dvh;
+    border-radius: 0;
+    z-index: 110;
     transform: translateX(-100%);
     transition: transform 0.2s ease;
     box-shadow: 4px 0 16px rgba(0,0,0,0.08);
   }
 
-  .help-toc-bar.active ~ .help-layout .help-sidebar {
-    top: calc(var(--help-header-h) + var(--help-toc-h));
-    height: calc(100dvh - var(--help-header-h) - var(--help-toc-h));
-  }
-
   .help-sidebar.open { transform: translateX(0); }
-  .help-sidebar.open + .help-sidebar-overlay { display: block; }
+  .help-sidebar.open ~ .help-sidebar-overlay,
+  body:has(.help-sidebar.open) .help-sidebar-overlay { display: block; }
 
-  .help-content { padding: 32px 20px; }
+  .help-content { padding: 24px 20px 64px; max-width: 100%; }
 
   .help-search { width: 160px; }
   .help-search:focus { width: 200px; }
