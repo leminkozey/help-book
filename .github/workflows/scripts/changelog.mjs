@@ -59,7 +59,11 @@ const commits = raw
 const COMMIT_RE = /^(feat|fix|perf|refactor|docs|style|test|build|ci|chore|security)(\(([^)]+)\))?(!)?:\s*(.+?)\s*$/;
 const SUBJECT_ISSUE_RE = /\(?#(\d+)\)?\s*$/;
 const BODY_CLOSE_RE = /\b(close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)/gi;
-const BODY_REF_RE = /\brefs?\s+#(\d+)/gi;
+
+// commit subjects are user-controlled — escape markdown specials before rendering
+function mdEscape(s) {
+  return String(s).replace(/[\\`*_{}[\]()#+\-!<>|]/g, m => '\\' + m);
+}
 
 const sections = {};
 const closingIssues = new Set();
@@ -84,20 +88,18 @@ for (const c of commits) {
   }
 
   for (const m2 of c.body.matchAll(BODY_CLOSE_RE)) closingIssues.add([m2[2], c.hash.slice(0, 7)].join('\t'));
-  // refs are linked but NOT auto-closed
-  for (const m2 of c.body.matchAll(BODY_REF_RE)) { void m2; }
   if (displayIssue) closingIssues.add([displayIssue, c.hash.slice(0, 7)].join('\t'));
 
   const isBreaking = !!breakingMark || /^BREAKING CHANGE:/m.test(c.body);
   const sectionName = isBreaking ? BREAKING_SECTION : SECTIONS[type];
   if (!sectionName) continue;
 
-  const scopePart = scope ? `**${scope}**: ` : '';
+  const scopePart = scope ? `**${mdEscape(scope)}**: ` : '';
   const issuePart = displayIssue
     ? ` ([#${displayIssue}](${repoUrl}/issues/${displayIssue}))`
     : '';
   const hashPart = ` ([${c.hash.slice(0, 7)}](${repoUrl}/commit/${c.hash}))`;
-  bucket(sectionName).push(`- ${scopePart}${msg}${issuePart}${hashPart}`);
+  bucket(sectionName).push(`- ${scopePart}${mdEscape(msg)}${issuePart}${hashPart}`);
 }
 
 const today = new Date().toISOString().slice(0, 10);
@@ -116,7 +118,8 @@ if (Object.keys(sections).length === 0) {
 
 console.log('--- Generated entry ---\n' + entry + '\n--- /entry ---');
 
-const changelogPath = resolve('CHANGELOG.md');
+// resolve relative to workspace, not CWD — local invocation from a subdir would otherwise write to wrong path
+const changelogPath = resolve(process.env.GITHUB_WORKSPACE || process.cwd(), 'CHANGELOG.md');
 let changelog;
 try {
   changelog = readFileSync(changelogPath, 'utf8');
