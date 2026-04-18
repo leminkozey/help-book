@@ -9,11 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `scripts/install.sh` — one-line installer/updater for downstream projects (`curl ... | bash`)
-- Release workflow now publishes a code-only ZIP asset (`help-book-vX.Y.Z.zip`) on every tag, containing only `index.html`, `help.css`, `help.js`
+- Release workflow publishes a code-only ZIP asset (`help-book-vX.Y.Z.zip`) on every tag, containing only `index.html`, `help.css`, `help.js`
 - README documents install, version-pinned install, custom target dir, manual ZIP download, and inspect-before-run flow
+- `.help-book-installed` marker file for robust install/update detection
 
 ### Changed
 - Default accent reverted from Mintlify green (`#18E299`) back to warm orange (`#e8791d`); `--help-accent-deep` and `--help-accent-light` adjusted to matching tones
+- Release workflow: ZIP is built from the tag commit (via `git archive`), attached atomically through `gh release create` (avoids release-without-asset state on partial failure)
+- Release workflow: drop unused `pull-requests:write` permission; `git push` retries 3× with rebase + backoff
+- README manual-download snippet now resolves the latest tag dynamically and uses `unzip -n` to never overwrite existing files
+- Code cleanup: removed decorative section-header comments across `help.js`, `help.css`, `changelog.mjs`; kept WHY-comments
+
+### Fixed
+- changelog.mjs: removed dead `BODY_REF_RE` loop
+- changelog.mjs: resolve `CHANGELOG.md` against `GITHUB_WORKSPACE` (CWD fallback) so local invocation from a subdir writes to the right path
+
+### Security
+- installer: validate version tag against `^v[0-9]+\.[0-9]+\.[0-9]+(-pre)?$` before embedding in URLs (defeats injection via crafted API response or CLI arg)
+- installer: abort on unsafe `HELP_BOOK_DIR` (system paths, `$HOME` directly)
+- installer: extract ZIP to a fresh tmp dir then whitelist-copy only the 3 expected files (defeats zip-slip + symlink-follow); refuse to overwrite symlinked target files (TOCTOU mitigation)
+- installer: integrity check via `unzip -tq`; bounded `curl --connect-timeout/--max-time/--retry`; trap covers `EXIT INT TERM HUP`
+- workflow: every `${{ }}` in `run:` blocks is mapped through `env:` first (defeats script-injection via crafted `workflow_dispatch` tag input or malicious tag name); explicit tag-format validation
+- workflow: `set -euo pipefail` at the top of every `run:` block
+- changelog.mjs: escape Markdown special chars in commit subjects + scopes before rendering (prevents phishing links / HTML injection in auto-generated release notes)
 
 ## [2.0.0] - 2026-04-18
 
