@@ -8,13 +8,14 @@
   --help-accent-deep: #0fa76e;
   --help-accent-light: #d4fae8;
 
-  /* Surfaces */
-  --help-bg: #ffffff;
-  --help-bg-secondary: #fafafa;
+  /* Surfaces (macOS-style: BG grau, Cards heller) */
+  --help-bg: #f5f5f7;
+  --help-bg-secondary: #eeeef0;
+  --help-card-bg: #ffffff;
   --help-sidebar-bg: #ffffff;
-  --help-header-bg: rgba(255,255,255,0.85);
+  --help-header-bg: rgba(245,245,247,0.75);
   --help-search-bg: #ffffff;
-  --help-toc-bg: rgba(255,255,255,0.85);
+  --help-toc-bg: rgba(245,245,247,0.75);
 
   /* Text */
   --help-text: #0d0d0d;
@@ -60,12 +61,13 @@
 }
 
 [data-theme="dark"] {
-  --help-bg: #0d0d0d;
-  --help-bg-secondary: #141414;
-  --help-sidebar-bg: #0d0d0d;
-  --help-header-bg: rgba(13,13,13,0.85);
-  --help-search-bg: #141414;
-  --help-toc-bg: rgba(13,13,13,0.85);
+  --help-bg: #1c1c1e;
+  --help-bg-secondary: #242426;
+  --help-card-bg: #2c2c2e;
+  --help-sidebar-bg: #2c2c2e;
+  --help-header-bg: rgba(28,28,30,0.75);
+  --help-search-bg: #3a3a3c;
+  --help-toc-bg: rgba(28,28,30,0.75);
 
   --help-text: #ededed;
   --help-text-body: #d4d4d4;
@@ -138,9 +140,8 @@ body {
   padding-left: max(24px, env(safe-area-inset-left));
   padding-right: max(24px, env(safe-area-inset-right));
   background: var(--help-header-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--help-border);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
 }
 
 .help-title {
@@ -304,6 +305,8 @@ body {
 
 .help-layout {
   display: flex;
+  gap: 12px;
+  padding: 12px;
   min-height: calc(100dvh - var(--help-header-h));
 }
 
@@ -317,18 +320,19 @@ body {
   width: var(--help-sidebar-w);
   min-width: var(--help-sidebar-w);
   background: var(--help-sidebar-bg);
-  border-right: 1px solid var(--help-border);
-  padding: 24px 12px;
+  border-radius: var(--help-radius-lg);
+  padding: 16px 12px;
   overflow-y: auto;
   position: sticky;
-  top: var(--help-header-h);
-  height: calc(100dvh - var(--help-header-h));
+  top: calc(var(--help-header-h) + 12px);
+  height: calc(100dvh - var(--help-header-h) - 24px);
+  box-shadow: var(--help-shadow-card);
   transition: background 0.2s;
 }
 
 .help-toc-bar.active ~ .help-layout .help-sidebar {
-  top: calc(var(--help-header-h) + var(--help-toc-h));
-  height: calc(100dvh - var(--help-header-h) - var(--help-toc-h));
+  top: calc(var(--help-header-h) + var(--help-toc-h) + 12px);
+  height: calc(100dvh - var(--help-header-h) - var(--help-toc-h) - 24px);
 }
 
 .help-sidebar-overlay {
@@ -413,9 +417,14 @@ body {
 .help-content {
   flex: 1;
   min-width: 0;
-  padding: 48px 64px;
-  max-width: calc(var(--help-content-max) + 128px);
+  padding: 40px 48px;
+  max-width: calc(var(--help-content-max) + 96px);
+  background: var(--help-card-bg);
+  border-radius: var(--help-radius-lg);
+  box-shadow: var(--help-shadow-card);
   outline: none;
+  margin: 0 auto;
+  align-self: flex-start;
 }
 
 /* ─── TOC Bar ──────────────────────────────────────────────── */
@@ -426,9 +435,8 @@ body {
   top: var(--help-header-h);
   z-index: 90;
   background: var(--help-toc-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--help-border);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   padding: 0 24px;
   overflow-x: auto;
   overflow-y: hidden;
@@ -523,9 +531,7 @@ body {
   font-weight: 600;
   line-height: 1.10;
   letter-spacing: -0.8px;
-  margin-bottom: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--help-border);
+  margin-bottom: 24px;
 }
 
 .help-article h2 {
@@ -533,8 +539,8 @@ body {
   font-weight: 600;
   line-height: 1.30;
   letter-spacing: -0.24px;
-  margin-top: 48px;
-  margin-bottom: 12px;
+  margin-top: 56px;
+  margin-bottom: 16px;
 }
 
 .help-article h3 {
@@ -609,8 +615,8 @@ body {
 
 .help-article hr {
   border: none;
-  border-top: 1px solid var(--help-border);
-  margin: 40px 0;
+  height: 0;
+  margin: 48px 0;
 }
 
 /* ─── Inline Code ──────────────────────────────────────────── */
@@ -619,11 +625,10 @@ body {
   font-family: var(--help-font-mono);
   font-size: 0.875em;
   font-weight: 500;
-  background: var(--help-code-bg);
+  background: var(--help-bg-secondary);
   color: var(--help-text);
   padding: 2px 6px;
   border-radius: var(--help-radius-sm);
-  border: 1px solid var(--help-border);
 }
 
 /* ─── Code Blocks ──────────────────────────────────────────── */
@@ -735,7 +740,6 @@ body {
 .help-footer {
   margin-top: 64px;
   padding: 24px 0;
-  border-top: 1px solid var(--help-border);
   text-align: center;
   font-family: var(--help-font-mono);
   font-size: 11px;
