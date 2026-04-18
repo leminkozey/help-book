@@ -1,9 +1,9 @@
 # Help Book
 
-[![Release](https://img.shields.io/github/v/release/leminkozey/help-book?label=release&color=18E299)](https://github.com/leminkozey/help-book/releases)
-[![License: MIT](https://img.shields.io/badge/license-MIT-18E299)](#license)
-[![No Build Step](https://img.shields.io/badge/build-none-18E299)](#)
-[![Vanilla JS](https://img.shields.io/badge/vanilla-JS-18E299)](#)
+[![Release](https://img.shields.io/github/v/release/leminkozey/help-book?label=release&color=e8791d)](https://github.com/leminkozey/help-book/releases)
+[![License: MIT](https://img.shields.io/badge/license-MIT-e8791d)](#license)
+[![No Build Step](https://img.shields.io/badge/build-none-e8791d)](#)
+[![Vanilla JS](https://img.shields.io/badge/vanilla-JS-e8791d)](#)
 
 A standalone, drop-in documentation system for any web project. No build step, no npm, no framework — just static files. Mintlify-inspired aesthetic, macOS-Settings layout, dark mode out of the box.
 
@@ -25,7 +25,7 @@ Copy the `help/` folder into your project, edit `chapters.json`, write markdown 
 - Full-text search across all chapters (`Ctrl+K` / `Cmd+K`), locale-aware, with indexing state
 - Light / dark theme — follows system preference, syncs across tabs, no flash on first paint
 - Inter typography + Geist Mono code labels (loaded from Google Fonts)
-- Mintlify brand-green accent — overridable per-project via `chapters.json`
+- Warm orange accent (`#e8791d`) — overridable per-project via `chapters.json`
 - Pill-shaped search and copy buttons; subtle 5%-opacity borders
 - Syntax highlighting (highlight.js) with copy-to-clipboard
 - Previous / next chapter navigation
@@ -109,7 +109,7 @@ Everything is configured in `chapters.json`:
 {
   "title": "My Project Help",
   "version": "v1.0.0",
-  "accent": "#18E299",
+  "accent": "#e8791d",
   "chapters": [
     {
       "id": "intro",
@@ -135,7 +135,7 @@ Everything is configured in `chapters.json`:
 |----------|-------------|
 | `title` | Header and browser tab title |
 | `version` | Shown in footer (optional) |
-| `accent` | CSS accent color — accepts hex, `rgb(...)`, `hsl(...)`, `oklch(...)` (default: Mintlify green `#18E299`) |
+| `accent` | CSS accent color — accepts hex, `rgb(...)`, `hsl(...)`, `oklch(...)` (default: warm orange `#e8791d`) |
 | `chapters` | Ordered list of chapter objects |
 
 Chapters can be nested one level deep. Parent chapters can optionally have their own `file`.

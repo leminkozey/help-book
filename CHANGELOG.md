@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Release workflow now publishes a code-only ZIP asset (`help-book-vX.Y.Z.zip`) on every tag, containing only `index.html`, `help.css`, `help.js`
 - README documents install, version-pinned install, custom target dir, manual ZIP download, and inspect-before-run flow
 
+### Changed
+- Default accent reverted from Mintlify green (`#18E299`) back to warm orange (`#e8791d`); `--help-accent-deep` and `--help-accent-light` adjusted to matching tones
+
 ## [2.0.0] - 2026-04-18
 
 ### Changed (BREAKING)
