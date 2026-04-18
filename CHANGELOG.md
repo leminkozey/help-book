@@ -55,6 +55,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed `frame-ancestors` from `<meta>` CSP (only valid as HTTP header)
 - README documents required production headers (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy)
 
+## [1.1.0] - 2026-03-30
+
+### Security
+- XSS protection: Markdown output sanitized with DOMPurify before rendering
+- SRI hashes on all CDN scripts (marked.js, highlight.js, DOMPurify)
+- HTML injection: chapter IDs escaped with `encodeURIComponent` in href attributes
+
+### Fixed
+- Search race condition: chapters fully preloaded before search is enabled
+- TOC bar gap: sidebar and layout dynamically adjust when TOC bar is hidden (56px) vs visible (92px)
+- Config loading: response status checked before parsing JSON
+- Copy buttons always visible on code blocks with proper light/dark mode support
+
+### Changed
+- Removed unused global `config` variable
+- Replaced DOM-based `escapeHtml` with efficient string replacement
+
 ## [1.0.0] - 2026-03-30
 
 ### Added
@@ -67,14 +84,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Previous / next chapter navigation
 - Mobile responsive with sidebar overlay
 - Customizable accent color via `chapters.json`
-- SRI hashes and DOMPurify for CDN scripts
 
 ### Fixed
-- XSS, race condition, unescaped IDs, dead code in help.js
 - TOC bar: reset state on chapter change, correct scroll offset
 - Light mode code blocks and prev/next navigation bug
 - Dark mode: neutral gray/black instead of blue-tinted Catppuccin
 
 [Unreleased]: https://github.com/leminkozey/help-book/compare/v2.0.0...HEAD
-[2.0.0]: https://github.com/leminkozey/help-book/compare/v1.0.0...v2.0.0
+[2.0.0]: https://github.com/leminkozey/help-book/compare/v1.1.0...v2.0.0
+[1.1.0]: https://github.com/leminkozey/help-book/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/leminkozey/help-book/releases/tag/v1.0.0
