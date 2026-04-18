@@ -40,9 +40,7 @@
 
   /* Layout */
   --help-sidebar-w: 280px;
-  --help-content-max: 760px;
   --help-header-h: 56px;
-  --help-toc-h: 36px;
 
   /* Radii */
   --help-radius-sm: 4px;
@@ -141,7 +139,7 @@ body {
   gap: 12px;
   height: var(--help-header-h);
   padding: 0 24px;
-  padding-left: calc(var(--help-sidebar-w) + 36px);
+  padding-left: calc(var(--help-sidebar-w) + 40px);
   padding-right: max(24px, env(safe-area-inset-right));
   background: var(--help-header-bg);
   backdrop-filter: blur(20px) saturate(180%);
@@ -329,11 +327,21 @@ body {
   height: calc(100dvh - 24px);
   background: var(--help-sidebar-bg);
   border-radius: var(--help-radius-lg);
-  padding: 16px 12px;
-  overflow-y: auto;
+  padding: 16px 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   box-shadow: var(--help-shadow-card);
   z-index: 200;
   transition: background 0.2s;
+}
+
+.help-nav {
+  list-style: none;
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 12px;
+  min-height: 0;
 }
 
 .help-sidebar-overlay {
@@ -341,11 +349,10 @@ body {
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.4);
-  z-index: 49;
+  z-index: 105;
   backdrop-filter: blur(2px);
 }
 
-.help-nav { list-style: none; }
 .help-nav li { position: relative; }
 
 .help-nav-item {
@@ -427,7 +434,7 @@ body {
   display: none;
   flex: 1;
   min-width: 0;
-  justify-content: center;
+  justify-content: safe center;
   align-items: center;
   overflow-x: auto;
   overflow-y: hidden;
@@ -452,7 +459,7 @@ body {
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  height: calc(var(--help-toc-h) - 8px);
+  height: 32px;
   color: var(--help-text-muted);
   text-decoration: none;
   font-family: var(--help-font-sans);
@@ -814,6 +821,8 @@ body {
     left: 0;
     top: 0;
     height: 100dvh;
+    padding-top: max(16px, env(safe-area-inset-top));
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
     border-radius: 0;
     z-index: 110;
     transform: translateX(-100%);
@@ -860,7 +869,7 @@ body {
 /* ─── Skip Link (a11y) ─────────────────────────────────────── */
 
 .help-skip-link {
-  position: absolute;
+  position: fixed;
   top: -48px;
   left: 12px;
   padding: 10px 16px;
@@ -887,4 +896,20 @@ body {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* ─── Backdrop-Filter Fallback ─────────────────────────────── */
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .help-header { background: var(--help-bg); }
+  .help-sidebar-overlay { background: rgba(0,0,0,0.6); }
+}
+
+/* ─── Print ────────────────────────────────────────────────── */
+
+@media print {
+  body { padding: 0; }
+  .help-header, .help-sidebar, .help-sidebar-overlay, .help-skip-link { display: none !important; }
+  .help-content { padding: 0; max-width: none; }
+  .help-copy-btn { display: none; }
 }
