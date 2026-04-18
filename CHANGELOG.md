@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-04-18
+
+### Changed (BREAKING)
+- Complete visual redesign inspired by Mintlify and macOS Settings
+- Default brand accent switched from orange (`#e8791d`) to Mintlify green (`#18E299`) — still overridable via `chapters.json`
+- Typography swapped to Inter (UI/body) and Geist Mono (code/labels), loaded from Google Fonts
+- Layout reworked: floating sidebar bubble (full viewport height, fixed left), header fixed top with backdrop blur edge-to-edge, content runs full-width and anchors left
+- TOC bar moved from a separate sticky band into the header center
+- Title moved from header into the sidebar bubble
+- All section dividers and border-lines removed in favour of whitespace and subtle background tints
+- Code blocks, tables, prev/next cards use 16px radius and 5%-opacity borders
+- Search input and copy buttons reshaped to pills (radius 9999px)
+
+### Added
+- Mintlify-inspired `DESIGN.md` reference at repo root (via `npx getdesign`)
+- CSP `<meta>` policy with strict allowlist
+- Color-scheme `<meta>` and FOUC-preventing inline theme bootstrap
+- ARIA: skip-link, combobox search pattern, `aria-pressed`/`aria-expanded` sync, focus trap on Esc
+- `prefers-color-scheme` change listener (auto-follow OS while no manual choice exists)
+- Cross-tab theme sync via `storage` event (falls back to OS pref when storage cleared)
+- `prefers-reduced-motion` and `@supports not (backdrop-filter)` fallbacks
+- `@media print` stylesheet
+- Production deployment notes in README (security headers, hardened express config, symlink warning)
+- iPhone safe-area insets for sidebar and header
+
+### Fixed
+- Race condition in `navigate()`: stale fetch could overwrite newer chapter — now bails on `navId !== currentId`
+- `hashchange` re-entry: `currentId` set before hash update, plus `decodeURIComponent` to handle percent-encoded ids
+- `scrollSpyLocked` leaked when a chapter had fewer than two `<h2>`s — now released
+- Sidebar group did not auto-expand when navigating to a child via hash or search
+- Mobile overlay z-index was below the header (49 → 105) — overlay now covers the header
+- Skip-link was hidden behind the fixed header — now `position: fixed`
+- TOC `justify-content: center` collapsed the scroll start at many items — now `safe center`
+- 4px misalignment between header content and article body
+- Sidebar `border-radius` clipped the scrollbar — sidebar now `overflow: hidden`, inner `<ul>` scrolls
+- Inline code lost its visual hierarchy in dark mode (now uses `--help-bg-secondary`)
+- Memory leaks: copy buttons and TOC links use event delegation, single timer for `scrollToHeading`
+- Mobile sidebar slid under iPhone notch — now respects `env(safe-area-inset-top)`
+
+### Security
+- Explicit DOMPurify config: `ALLOWED_URI_REGEXP`, `FORBID_TAGS`, `FORBID_ATTR`, controlled `target`/`rel`
+- Validate `accent` (CSS-color regex) and `chapter.file` (path regex with traversal-depth guard) from `chapters.json`
+- Object maps switched to `Object.create(null)` (prototype pollution dicht)
+- `target="_blank"` links get `rel="noopener noreferrer"`
+- `referrerpolicy="no-referrer"` on all CDN tags
+- Removed `frame-ancestors` from `<meta>` CSP (only valid as HTTP header)
+- README documents required production headers (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy)
+
 ## [1.0.0] - 2026-03-30
 
 ### Added
@@ -27,5 +75,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Light mode code blocks and prev/next navigation bug
 - Dark mode: neutral gray/black instead of blue-tinted Catppuccin
 
-[Unreleased]: https://github.com/leminkozey/help-book/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/leminkozey/help-book/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/leminkozey/help-book/compare/v1.0.0...v2.0.0
 [1.0.0]: https://github.com/leminkozey/help-book/releases/tag/v1.0.0
