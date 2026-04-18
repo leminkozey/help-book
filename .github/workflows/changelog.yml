@@ -1,0 +1,101 @@
+name: Generate Changelog & Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to generate changelog for (e.g. v2.0.1)'
+        required: true
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history needed for git log)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Resolve current and previous tag
+        id: tags
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            CURRENT="${{ github.event.inputs.tag }}"
+          else
+            CURRENT="${GITHUB_REF#refs/tags/}"
+          fi
+          PREVIOUS=$(git tag --sort=-v:refname | grep -v "^${CURRENT}$" | head -n1 || true)
+          if [ -z "$PREVIOUS" ]; then
+            RANGE=""
+          else
+            RANGE="${PREVIOUS}..${CURRENT}"
+          fi
+          echo "current=${CURRENT}" >> "$GITHUB_OUTPUT"
+          echo "previous=${PREVIOUS}" >> "$GITHUB_OUTPUT"
+          echo "range=${RANGE}" >> "$GITHUB_OUTPUT"
+          echo "Resolved: previous=${PREVIOUS} current=${CURRENT} range=${RANGE}"
+
+      - name: Generate changelog entry & extract closing issues
+        id: gen
+        env:
+          REPO_URL: https://github.com/${{ github.repository }}
+        run: |
+          node .github/workflows/scripts/changelog.mjs \
+            --range "${{ steps.tags.outputs.range }}" \
+            --tag "${{ steps.tags.outputs.current }}" \
+            --previous "${{ steps.tags.outputs.previous }}" \
+            --repo "$REPO_URL"
+
+      - name: Commit updated CHANGELOG.md
+        run: |
+          if git diff --quiet CHANGELOG.md; then
+            echo "CHANGELOG.md unchanged, skipping commit"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git commit -m "docs(changelog): release ${{ steps.tags.outputs.current }}"
+          git push origin main
+
+      - name: Create / update GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BODY_FILE="$RUNNER_TEMP/release-body.md"
+          if [ ! -f "$BODY_FILE" ]; then
+            echo "release-body.md missing — generator step failed?" >&2
+            exit 1
+          fi
+          if gh release view "${{ steps.tags.outputs.current }}" >/dev/null 2>&1; then
+            gh release edit "${{ steps.tags.outputs.current }}" \
+              --notes-file "$BODY_FILE" \
+              --title "${{ steps.tags.outputs.current }}"
+          else
+            gh release create "${{ steps.tags.outputs.current }}" \
+              --notes-file "$BODY_FILE" \
+              --title "${{ steps.tags.outputs.current }}"
+          fi
+
+      - name: Close referenced issues
+        if: hashFiles(format('{0}/closing-issues.txt', runner.temp)) != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          while IFS=$'\t' read -r ISSUE COMMIT; do
+            [ -z "$ISSUE" ] && continue
+            echo "Closing issue #${ISSUE} (referenced by ${COMMIT})"
+            gh issue close "$ISSUE" \
+              --reason completed \
+              --comment "Released in [${{ steps.tags.outputs.current }}](https://github.com/${{ github.repository }}/releases/tag/${{ steps.tags.outputs.current }}) via ${COMMIT}." \
+              || echo "  (failed — issue may not exist or already closed)"
+          done < "$RUNNER_TEMP/closing-issues.txt"
