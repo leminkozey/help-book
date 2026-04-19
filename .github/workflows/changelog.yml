@@ -89,7 +89,7 @@ jobs:
           mkdir -p "$SRC"
           git archive "$TAG" --format=tar --prefix=root/ | tar -x -C "$SRC"
           ZIP="$RUNNER_TEMP/help-book-${TAG}.zip"
-          (cd "$SRC/root/help" && zip -q "$ZIP" index.html help.css help.js)
+          (cd "$SRC/root/help" && zip -q "$ZIP" index.html help.css help.js logo.svg)
           test -f "$ZIP" || { echo "::error::ZIP build failed"; exit 1; }
           echo "Built $(basename "$ZIP") ($(stat -c%s "$ZIP") bytes)"
 

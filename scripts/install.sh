@@ -10,7 +10,7 @@ VERSION="${1:-latest}"
 TARGET="${HELP_BOOK_DIR:-./help}"
 MARKER=".help-book-installed"
 TAG_RE='^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$'
-EXPECTED=(index.html help.css help.js)
+EXPECTED=(index.html help.css help.js logo.svg)
 
 for cmd in curl unzip mkdir mktemp; do
   command -v "$cmd" >/dev/null 2>&1 || {

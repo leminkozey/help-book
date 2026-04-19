@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-04-19
+
+### Added
+- Fox brand logo: 28×28 SVG in the sidebar header (uses `currentColor` to inherit the accent), plus `logo.svg` registered as the browser tab favicon
+- Installer and release workflow now ship `logo.svg` as a fourth code asset alongside `index.html`, `help.css`, `help.js`
+
 ## [2.1.0] - 2026-04-18
 
 ### Added
