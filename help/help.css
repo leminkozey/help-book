@@ -406,6 +406,7 @@ body {
 
 .help-content {
   min-width: 0;
+  max-width: calc(72ch + 64px);
   padding: 28px 48px 64px 16px;
   outline: none;
 }
