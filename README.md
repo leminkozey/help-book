@@ -24,7 +24,7 @@ Copy the `help/` folder into your project, edit `chapters.json`, write markdown 
 - Inline TOC navigator in the sticky header (with scroll-spy)
 - Full-text search across all chapters (`Ctrl+K` / `Cmd+K`), locale-aware, with indexing state
 - Light / dark theme — follows system preference, syncs across tabs, no flash on first paint
-- Inter typography + Geist Mono code labels (loaded from Google Fonts)
+- Geist Sans body + Geist Mono code labels (loaded from Google Fonts)
 - Warm orange accent (`#e8791d`) — overridable per-project via `chapters.json`
 - Pill-shaped search and copy buttons; subtle 5%-opacity borders
 - Syntax highlighting (highlight.js) with copy-to-clipboard
@@ -58,22 +58,37 @@ app.use('/help', express.static('help', {
 }));
 ```
 
-### Install / Update Options
+### Updating
+
+After the first install, every `help/` folder comes with its own updater:
+
+```bash
+bash help/update          # → latest release
+bash help/update v2.4.0   # → pin a specific version
+```
+
+The wrapper resolves the target relative to itself, so it works regardless of the directory you run it from. Your `chapters.json` and everything under `chapters/` is **never touched** — only the bundled code files are replaced.
+
+Before overwriting anything, the previous code files are copied to `help/.help-book-backup/`. If the new release breaks something, roll back with:
+
+```bash
+cp help/.help-book-backup/*.* help/
+cp help/.help-book-backup/update help/ 2>/dev/null
+```
+
+### Install Options
 
 ```bash
 # Pin a specific version
-curl -fsSL https://raw.githubusercontent.com/leminkozey/help-book/main/scripts/install.sh | bash -s v2.0.0
+curl -fsSL https://raw.githubusercontent.com/leminkozey/help-book/main/scripts/install.sh | bash -s v2.4.0
 
 # Custom target directory (default: ./help)
 HELP_BOOK_DIR=public/docs curl -fsSL https://raw.githubusercontent.com/leminkozey/help-book/main/scripts/install.sh | bash
-
-# Update an existing install (re-run the same command — auto-detects)
-curl -fsSL https://raw.githubusercontent.com/leminkozey/help-book/main/scripts/install.sh | bash
 ```
 
 The installer:
-- **First run** — drops `index.html`, `help.css`, `help.js` plus a starter `chapters.json` + `chapters/01-getting-started.md`.
-- **Subsequent runs** — overwrites only the three code files. Your `chapters.json` and any markdown in `chapters/` is left untouched.
+- **First run** — drops `index.html`, `help.css`, `help.js`, `logo.svg`, `update` plus a starter `chapters.json` + `chapters/01-getting-started.md`.
+- **Subsequent runs** — overwrites only the code files. Your `chapters.json` and any markdown in `chapters/` is left untouched, and the previous code files get snapshotted to `help/.help-book-backup/` first.
 
 > **Prefer to inspect first?** `curl -fsSL .../install.sh -o install.sh && less install.sh && bash install.sh`
 
@@ -90,7 +105,7 @@ unzip -n "help-book-$TAG.zip" -d help/   # -n: never overwrite existing files
 
 Or pin a specific version manually from the [releases page](https://github.com/leminkozey/help-book/releases) — the asset is always named `help-book-vX.Y.Z.zip`.
 
-> The ZIP intentionally contains **only the three code files** (`index.html`, `help.css`, `help.js`). Your `chapters.json` and anything in `chapters/` is never overwritten — `unzip -n` is belt-and-suspenders against future archive changes.
+> The ZIP contains **only the five code files** (`index.html`, `help.css`, `help.js`, `logo.svg`, `update`). Your `chapters.json` and anything in `chapters/` is never overwritten — `unzip -n` is belt-and-suspenders against future archive changes.
 
 ### Final layout
 
@@ -100,6 +115,8 @@ your-project/
     index.html       # ← managed by installer
     help.css         # ← managed by installer
     help.js          # ← managed by installer
+    logo.svg         # ← managed by installer
+    update           # ← managed by installer (run with: bash help/update)
     chapters.json    # ← yours: edit freely
     chapters/        # ← yours: edit freely
       01-getting-started.md

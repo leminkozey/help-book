@@ -70,8 +70,9 @@ The accent color can be customized per project via the `accent` field. This colo
 
 - Active sidebar item highlight
 - Links
-- Blockquote borders
+- List markers
 - Search result highlights
+- Inline selection and scrollbar tint
 
 For deeper customization, override the CSS variables in `help.css`:
 

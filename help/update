@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Update this Help Book install to the latest (or a specified) release.
+# Usage:
+#   bash update            # → latest release
+#   bash update v2.3.0     # → pin to a specific version
+#   ./update               # (works too if the file is executable)
+#
+# This script lives inside your help/ folder and always updates itself in place.
+
+set -euo pipefail
+
+HERE="$(cd "$(dirname "$0")" && pwd)"
+VERSION="${1:-latest}"
+REPO="leminkozey/help-book"
+URL="https://raw.githubusercontent.com/${REPO}/main/scripts/install.sh"
+
+# IMPORTANT: env vars must go to `bash` (the script runner), not `curl` — putting
+# HELP_BOOK_DIR=... in front of curl would leak the default target `./help` into
+# whatever directory the user invoked us from.
+export HELP_BOOK_DIR="$HERE"
+curl -fsSL --connect-timeout 10 --max-time 30 --retry 2 --retry-delay 1 "$URL" \
+  | bash -s "$VERSION"
