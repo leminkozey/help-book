@@ -14,7 +14,7 @@
   --help-text: #0d0d0d;
   --help-text-body: #333333;
   --help-text-muted: #666666;
-  --help-text-tertiary: #888888;
+  --help-text-tertiary: #6e6e6e;
 
   --help-border: rgba(0,0,0,0.05);
   --help-border-strong: rgba(0,0,0,0.08);
@@ -56,7 +56,7 @@
   --help-text: #ededed;
   --help-text-body: #d4d4d4;
   --help-text-muted: #a0a0a0;
-  --help-text-tertiary: #888888;
+  --help-text-tertiary: #9a9a9a;
 
   --help-border: rgba(255,255,255,0.08);
   --help-border-strong: rgba(255,255,255,0.12);
