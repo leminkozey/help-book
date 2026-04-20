@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-04-20
+
+Audit pass driven by `impeccable /audit` — addresses every P0/P1/P2/P3 finding. No breaking changes to the public surface (accent, CSP, `chapters.json` schema, install.sh).
+
+### Added
+- **Collapsible "On this page" TOC for mobile viewports** (`<details>` element in `.help-content`). The header TOC bar used to disappear under 768px with no replacement, leaving long chapters unnavigable on phones.
+
+### Changed
+- **Typography swap**: Inter → **Geist Sans** as the body/UI face. Inter is on every "default AI font" list; Geist pairs naturally with the already-loaded Geist Mono.
+- **Article width capped at 72ch + 64px** padding. Body text on wide monitors used to wrap at 100+ chars; content still anchors left against the sidebar.
+- **H4 scale opened**: 16 → 18px. Previous scale had H4 = body size, distinguished only by weight; the new ratio matches the ~1.25 step used elsewhere.
+- **Accent shades are now theme-aware**: `--help-accent-deep` / `--help-accent-light` redefine themselves under `[data-theme="dark"]`. Six `[data-theme="dark"]` override blocks collapsed into the token definition.
+- **Scrollbar tinted toward brand accent** (`color-mix` with accent at 6%/10%).
+- **Sidebar-header divider removed** — replaced 1px border-bottom with whitespace (DESIGN.md already mandated no dividers).
+- **Search input width no longer animates on focus** — animating width forces a reflow every frame. Input sized for its typical content across three breakpoints.
+
+### Fixed
+- **Blockquote border-left stripe removed** (impeccable BAN 1). Full background tint + italic now signal the quote; the 3px accent side-stripe is the #1 AI-design tell in admin/doc UIs.
+- **`--help-text-tertiary` lifted to WCAG AA 4.5:1**: `#888` → `#6e6e6e` on light, `#888` → `#9a9a9a` on dark. Affects footer (11px), prev/next labels, copy-button label.
+- **H1 mobile letter-spacing** (`-0.4px` at 28px) — previously missing while 40px and 32px both had tracking.
+
+### Accessibility
+- **Interactive targets enlarged**: nav-item 30 → 36px (mobile 44px), TOC-bar link 32 → 36px, copy-button 28 → 32px (mobile 44px). WCAG 2.5.5 compliant on touch.
+
+### Polish
+- `.help-content` max-width now fluid via `clamp(72ch, 62vw, 84ch)` so ultra-wide viewports gain breathing room while 1024-1440 stays at the 72ch readability target.
+- Heading scale opened: H1 40 → 44, H2 24 → 26, H3 stays 20 (H2/H3 ratio now 1.30, ≥1.25 target). H4 repurposed as uppercase muted eyebrow label since a 4th size level is rarely earned in docs.
+- `<ol>` / `<ul>` markers now use the brand accent for subtle cohesion.
+- Inline `<code>` gains a 1px border for clearer boundary against body text.
+
 ## [2.2.2] - 2026-04-20
 
 ### Fixed
@@ -132,7 +162,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Light mode code blocks and prev/next navigation bug
 - Dark mode: neutral gray/black instead of blue-tinted Catppuccin
 
-[Unreleased]: https://github.com/leminkozey/help-book/compare/v2.2.2...HEAD
+[Unreleased]: https://github.com/leminkozey/help-book/compare/v2.3.0...HEAD
+[2.3.0]: https://github.com/leminkozey/help-book/compare/v2.2.2...v2.3.0
 [2.2.2]: https://github.com/leminkozey/help-book/compare/v2.2.0...v2.2.2
 [2.2.0]: https://github.com/leminkozey/help-book/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/leminkozey/help-book/compare/v2.0.0...v2.1.0
