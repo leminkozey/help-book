@@ -125,12 +125,11 @@ body {
 }
 
 .help-sidebar-header {
-  padding: 4px 12px 16px;
-  margin-bottom: 8px;
-  border-bottom: 1px solid var(--help-border);
+  padding: 4px 12px 20px;
+  margin-bottom: 4px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .help-logo {
@@ -868,7 +867,7 @@ body {
   }
   .help-content { padding: 24px 16px; }
   .help-search { width: 148px; padding: 8px 12px; }
-  .help-article h1 { font-size: 28px; }
+  .help-article h1 { font-size: 28px; letter-spacing: -0.4px; }
 }
 
 .help-skip-link {
