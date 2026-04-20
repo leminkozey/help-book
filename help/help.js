@@ -13,6 +13,8 @@
   var $nav      = document.querySelector('.help-nav');
   var $article  = document.querySelector('.help-article');
   var $toc      = document.querySelector('.help-toc-bar');
+  var $tocMobile     = document.querySelector('.help-toc-mobile');
+  var $tocMobileList = document.querySelector('.help-toc-mobile-list');
   var $footer   = document.querySelector('.help-footer');
   var $sidebar  = document.querySelector('.help-sidebar');
   var $overlay  = document.querySelector('.help-sidebar-overlay');
@@ -303,6 +305,8 @@
     if (headings.length < 2) {
       $toc.classList.remove('active');
       $toc.innerHTML = '';
+      if ($tocMobile) $tocMobile.hidden = true;
+      if ($tocMobileList) $tocMobileList.innerHTML = '';
       // release lock that navigate() set, since initScrollSpy() won't run to release it
       requestAnimationFrame(function () { scrollSpyLocked = false; });
       return;
@@ -310,6 +314,7 @@
 
     var inner = document.createElement('div');
     inner.className = 'help-toc-bar-inner';
+    if ($tocMobileList) $tocMobileList.innerHTML = '';
     headings.forEach(function (h) {
       var a = document.createElement('a');
       a.href = '#' + h.id;
@@ -318,24 +323,48 @@
       inner.appendChild(a);
       tocLinks.push(a);
       tocLinkMap[h.id] = a;
+
+      if ($tocMobileList) {
+        var li = document.createElement('li');
+        var mobileLink = document.createElement('a');
+        mobileLink.href = '#' + h.id;
+        mobileLink.dataset.headingId = h.id;
+        mobileLink.textContent = h.textContent;
+        li.appendChild(mobileLink);
+        $tocMobileList.appendChild(li);
+      }
     });
 
     $toc.innerHTML = '';
     $toc.appendChild(inner);
     $toc.classList.add('active');
+    if ($tocMobile) $tocMobile.hidden = false;
 
     initScrollSpy(headings);
   }
 
   function initTocDelegation() {
-    if (!$toc) return;
-    $toc.addEventListener('click', function (e) {
-      var a = e.target.closest('a[data-heading-id]');
-      if (!a || !$toc.contains(a)) return;
-      e.preventDefault();
-      setActiveTocLink(a);
-      scrollToHeading(a.dataset.headingId);
-    });
+    if ($toc) {
+      $toc.addEventListener('click', function (e) {
+        var a = e.target.closest('a[data-heading-id]');
+        if (!a || !$toc.contains(a)) return;
+        e.preventDefault();
+        setActiveTocLink(a);
+        scrollToHeading(a.dataset.headingId);
+      });
+    }
+    if ($tocMobileList) {
+      $tocMobileList.addEventListener('click', function (e) {
+        var a = e.target.closest('a[data-heading-id]');
+        if (!a) return;
+        e.preventDefault();
+        var headingId = a.dataset.headingId;
+        var headerLink = tocLinkMap[headingId];
+        if (headerLink) setActiveTocLink(headerLink);
+        scrollToHeading(headingId);
+        if ($tocMobile) $tocMobile.open = false;
+      });
+    }
   }
 
   function scrollToHeading(id) {
