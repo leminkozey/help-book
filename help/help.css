@@ -343,8 +343,9 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 7px 12px;
-  margin: 1px 0;
+  padding: 8px 12px;
+  min-height: 36px;
+  margin: 2px 0;
   color: var(--help-text-body);
   text-decoration: none;
   font-family: var(--help-font-sans);
@@ -438,9 +439,9 @@ body {
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  height: 32px;
+  gap: 8px;
+  padding: 8px 12px;
+  min-height: 36px;
   color: var(--help-text-muted);
   text-decoration: none;
   font-family: var(--help-font-sans);
@@ -631,13 +632,13 @@ body {
 
 .help-copy-btn {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  top: 8px;
+  right: 8px;
   background: var(--help-bg);
   border: 1px solid var(--help-border-strong);
   color: var(--help-text-muted);
-  padding: 4px 12px;
-  min-height: 28px;
+  padding: 6px 14px;
+  min-height: 32px;
   border-radius: var(--help-radius-pill);
   font-family: var(--help-font-mono);
   font-size: 11px;
@@ -801,6 +802,9 @@ body {
   body:has(.help-sidebar.open) .help-sidebar-overlay { display: block; }
 
   .help-content { padding: 24px 20px 64px; max-width: 100%; }
+
+  .help-nav-item { min-height: 44px; padding: 10px 12px; }
+  .help-copy-btn { min-height: 44px; padding: 10px 16px; }
 
   .help-search { width: 160px; }
   .help-search:focus { width: 200px; }
