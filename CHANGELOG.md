@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.2] - 2026-04-20
+
+### Fixed
+- Custom `accent` in `chapters.json` now propagates consistently across all UI states (#33):
+  - Five hardcoded `rgba(232,121,29,...)` sites (selection, search-glow, sidebar-active, TOC-active, code-highlight) replaced with `color-mix(in srgb, var(--help-accent) XX%, transparent)` so tints track the override
+  - `--help-accent-deep` and `--help-accent-light` now derived from `var(--help-accent)` via `color-mix()` instead of hardcoded orange tones — fixes light-mode text reverting to default orange when a custom accent is set
+
 ## [2.2.0] - 2026-04-19
 
 ### Added
@@ -125,7 +132,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Light mode code blocks and prev/next navigation bug
 - Dark mode: neutral gray/black instead of blue-tinted Catppuccin
 
-[Unreleased]: https://github.com/leminkozey/help-book/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/leminkozey/help-book/compare/v2.2.2...HEAD
+[2.2.2]: https://github.com/leminkozey/help-book/compare/v2.2.0...v2.2.2
+[2.2.0]: https://github.com/leminkozey/help-book/compare/v2.1.0...v2.2.0
 [2.1.0]: https://github.com/leminkozey/help-book/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/leminkozey/help-book/compare/v1.1.0...v2.0.0
 [1.1.0]: https://github.com/leminkozey/help-book/compare/v1.0.0...v1.1.0
