@@ -571,12 +571,12 @@ body {
 .help-article li > ol { margin-top: 6px; margin-bottom: 0; }
 
 .help-article blockquote {
-  border-left: 3px solid var(--help-accent);
   margin: 24px 0;
-  padding: 12px 20px;
+  padding: 16px 24px;
   background: var(--help-bg-secondary);
-  border-radius: 0 var(--help-radius-lg) var(--help-radius-lg) 0;
+  border-radius: var(--help-radius-lg);
   color: var(--help-text-muted);
+  font-style: italic;
 }
 
 .help-article blockquote p:last-child { margin-bottom: 0; }
