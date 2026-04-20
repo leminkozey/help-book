@@ -31,6 +31,12 @@ Audit pass driven by `impeccable /audit` — addresses every P0/P1/P2/P3 finding
 ### Accessibility
 - **Interactive targets enlarged**: nav-item 30 → 36px (mobile 44px), TOC-bar link 32 → 36px, copy-button 28 → 32px (mobile 44px). WCAG 2.5.5 compliant on touch.
 
+### Polish
+- `.help-content` max-width now fluid via `clamp(72ch, 62vw, 84ch)` so ultra-wide viewports gain breathing room while 1024-1440 stays at the 72ch readability target.
+- Heading scale opened: H1 40 → 44, H2 24 → 26, H3 stays 20 (H2/H3 ratio now 1.30, ≥1.25 target). H4 repurposed as uppercase muted eyebrow label since a 4th size level is rarely earned in docs.
+- `<ol>` / `<ul>` markers now use the brand accent for subtle cohesion.
+- Inline `<code>` gains a 1px border for clearer boundary against body text.
+
 ## [2.2.2] - 2026-04-20
 
 ### Fixed
