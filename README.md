@@ -24,7 +24,7 @@ Copy the `help/` folder into your project, edit `chapters.json`, write markdown 
 - Inline TOC navigator in the sticky header (with scroll-spy)
 - Full-text search across all chapters (`Ctrl+K` / `Cmd+K`), locale-aware, with indexing state
 - Light / dark theme — follows system preference, syncs across tabs, no flash on first paint
-- Inter typography + Geist Mono code labels (loaded from Google Fonts)
+- Geist Sans body + Geist Mono code labels (loaded from Google Fonts)
 - Warm orange accent (`#e8791d`) — overridable per-project via `chapters.json`
 - Pill-shaped search and copy buttons; subtle 5%-opacity borders
 - Syntax highlighting (highlight.js) with copy-to-clipboard
@@ -105,7 +105,7 @@ unzip -n "help-book-$TAG.zip" -d help/   # -n: never overwrite existing files
 
 Or pin a specific version manually from the [releases page](https://github.com/leminkozey/help-book/releases) — the asset is always named `help-book-vX.Y.Z.zip`.
 
-> The ZIP intentionally contains **only the three code files** (`index.html`, `help.css`, `help.js`). Your `chapters.json` and anything in `chapters/` is never overwritten — `unzip -n` is belt-and-suspenders against future archive changes.
+> The ZIP contains **only the five code files** (`index.html`, `help.css`, `help.js`, `logo.svg`, `update`). Your `chapters.json` and anything in `chapters/` is never overwritten — `unzip -n` is belt-and-suspenders against future archive changes.
 
 ### Final layout
 
