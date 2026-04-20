@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-04-20
+
+Install/update ergonomics: one-shot update command, automatic rollback snapshot. No breaking changes — existing installs keep working unchanged until they update once.
+
+### Added
+- **`help/update` wrapper script** — shipped inside the release ZIP. After one install, updating is:
+  ```bash
+  bash help/update          # → latest release
+  bash help/update v2.4.0   # → pin a specific version
+  ```
+  No more copy-pasting the full `curl | bash` URL. The wrapper always targets the `help/` folder it lives in, regardless of CWD.
+- **Pre-update backup** — before overwriting code files, the previous versions of `index.html`, `help.css`, `help.js`, `logo.svg`, `update` are snapshotted to `help/.help-book-backup/` (one generation deep). Rollback hint is printed in the output.
+- **Version-diff output** on update:
+  ```
+  [help-book] update complete — v2.3.0 → v2.4.0 in ./help
+  [help-book] backup of previous version: ./help/.help-book-backup/
+  [help-book] rollback: cp ./help/.help-book-backup/*.* ./help/ ...
+  ```
+
+### Changed
+- `install.sh` file-list split into `REQUIRED` (core 4 code files — must be in ZIP) and `OPTIONAL` (`update`). Older ZIPs without the wrapper install gracefully; downgrades keep the existing wrapper in place.
+- Release ZIP now contains 5 files (previously 4) — the `update` wrapper is bundled alongside `index.html`, `help.css`, `help.js`, `logo.svg`.
+
 ## [2.3.0] - 2026-04-20
 
 Audit pass driven by `impeccable /audit` — addresses every P0/P1/P2/P3 finding. No breaking changes to the public surface (accent, CSP, `chapters.json` schema, install.sh).
@@ -162,7 +185,8 @@ Audit pass driven by `impeccable /audit` — addresses every P0/P1/P2/P3 finding
 - Light mode code blocks and prev/next navigation bug
 - Dark mode: neutral gray/black instead of blue-tinted Catppuccin
 
-[Unreleased]: https://github.com/leminkozey/help-book/compare/v2.3.0...HEAD
+[Unreleased]: https://github.com/leminkozey/help-book/compare/v2.4.0...HEAD
+[2.4.0]: https://github.com/leminkozey/help-book/compare/v2.3.0...v2.4.0
 [2.3.0]: https://github.com/leminkozey/help-book/compare/v2.2.2...v2.3.0
 [2.2.2]: https://github.com/leminkozey/help-book/compare/v2.2.0...v2.2.2
 [2.2.0]: https://github.com/leminkozey/help-book/compare/v2.1.0...v2.2.0

@@ -4,17 +4,27 @@ Welcome to the Help Book — a standalone, drop-in documentation system for any 
 
 ## Installation
 
-Copy the `help/` folder into your project:
+One line, in your project root:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/leminkozey/help-book/main/scripts/install.sh | bash
+```
+
+This drops a ready-to-edit `help/` folder in the current directory with a starter `chapters.json` plus one demo chapter.
+
+### Final layout
 
 ```
 your-project/
   help/
-    index.html
-    help.css
-    help.js
-    chapters.json
-    chapters/
-      ...your markdown files
+    index.html       # ← managed by installer
+    help.css         # ← managed by installer
+    help.js          # ← managed by installer
+    logo.svg         # ← managed by installer
+    update           # ← managed by installer (run with: bash help/update)
+    chapters.json    # ← yours: edit freely
+    chapters/        # ← yours: edit freely
+      01-getting-started.md
 ```
 
 Then serve it as a static directory. For example with Express:
@@ -23,14 +33,24 @@ Then serve it as a static directory. For example with Express:
 app.use('/help', express.static('help'));
 ```
 
-Or with a plain HTTP server:
+Or with a plain HTTP server for local development:
 
 ```bash
-# development
 cd help && python3 -m http.server 8082
 ```
 
 Your documentation is now available at `yoursite.com/help`.
+
+## Updating
+
+Every `help/` folder ships its own updater — no URL to memorize:
+
+```bash
+bash help/update          # → latest release
+bash help/update v2.4.0   # → pin a specific version
+```
+
+Your `chapters.json` and everything under `chapters/` is **never touched**. Before overwriting the code files, the previous versions are snapshotted to `help/.help-book-backup/`, so you can roll back a bad update with a single copy.
 
 ## How It Works
 
