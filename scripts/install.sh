@@ -9,8 +9,13 @@ REPO="leminkozey/help-book"
 VERSION="${1:-latest}"
 TARGET="${HELP_BOOK_DIR:-./help}"
 MARKER=".help-book-installed"
+BACKUP_DIR=".help-book-backup"
 TAG_RE='^v[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$'
-EXPECTED=(index.html help.css help.js logo.svg)
+# files we ship in the release ZIP — REQUIRED must be present, OPTIONAL are copied if they exist.
+# `update` was added in v2.4.0; older ZIPs won't contain it, so it stays optional forever.
+REQUIRED=(index.html help.css help.js logo.svg)
+OPTIONAL=(update)
+EXPECTED=("${REQUIRED[@]}" "${OPTIONAL[@]}")
 
 for cmd in curl unzip mkdir mktemp; do
   command -v "$cmd" >/dev/null 2>&1 || {
@@ -90,10 +95,10 @@ EXTRACT="$TMP/extract"
 mkdir -p "$EXTRACT"
 unzip -oq "$TMP/code.zip" -d "$EXTRACT"
 
-# require exactly the files we expect (closes #8 sanity)
-for f in "${EXPECTED[@]}"; do
+# require the core code files; missing OPTIONAL files are tolerated for back-compat with old ZIPs
+for f in "${REQUIRED[@]}"; do
   if [ ! -f "$EXTRACT/$f" ]; then
-    echo "[help-book] zip missing expected file: $f" >&2
+    echo "[help-book] zip missing required file: $f" >&2
     exit 1
   fi
 done
@@ -114,15 +119,46 @@ else
   MODE="install"
 fi
 
-# whitelist-copy: only the 3 expected files land in $TARGET — defeats zip-slip (closes #2)
+# read the previously-installed version (for diff output + rollback hint)
+PREV_VERSION=""
+if [ -f "$TARGET/$MARKER" ]; then
+  PREV_VERSION=$(head -n1 "$TARGET/$MARKER" 2>/dev/null || true)
+fi
+
+# snapshot existing code files before overwrite so user can roll back (update mode only)
+if [ "$MODE" = "update" ]; then
+  BACKUP="$TARGET/$BACKUP_DIR"
+  rm -rf "$BACKUP"
+  mkdir -p "$BACKUP"
+  for f in "${EXPECTED[@]}"; do
+    # skip symlinks — we refuse to touch them below anyway
+    if [ -f "$TARGET/$f" ] && [ ! -L "$TARGET/$f" ]; then
+      cp -f "$TARGET/$f" "$BACKUP/$f"
+    fi
+  done
+  if [ -n "$PREV_VERSION" ]; then
+    printf '%s\n' "$PREV_VERSION" > "$BACKUP/version"
+  fi
+fi
+
+# whitelist-copy: only the EXPECTED files land in $TARGET — defeats zip-slip (closes #2)
 # refuse to overwrite a symlinked target file (TOCTOU mitigation)
 for f in "${EXPECTED[@]}"; do
+  # optional files may be absent in older ZIPs — skip silently
+  if [ ! -f "$EXTRACT/$f" ]; then
+    continue
+  fi
   if [ -L "$TARGET/$f" ]; then
     echo "[help-book] refuse to overwrite symlink: $TARGET/$f" >&2
     exit 1
   fi
   cp -f "$EXTRACT/$f" "$TARGET/$f"
 done
+
+# update helper must stay executable — ZIP preserves the mode, but be defensive
+if [ -f "$TARGET/update" ]; then
+  chmod +x "$TARGET/update" 2>/dev/null || true
+fi
 
 if [ "$MODE" = "install" ]; then
   echo "[help-book] first install — adding starter content"
@@ -148,5 +184,17 @@ fi
 # stamp marker with installed version (used for next run's mode detection)
 printf '%s\n' "$VERSION" > "$TARGET/$MARKER"
 
-echo "[help-book] $MODE complete — $VERSION ready in $TARGET"
-echo "[help-book] serve it with any static server, e.g.: cd $TARGET && python3 -m http.server 8082"
+if [ "$MODE" = "update" ] && [ -n "$PREV_VERSION" ] && [ "$PREV_VERSION" != "$VERSION" ]; then
+  echo "[help-book] update complete — $PREV_VERSION → $VERSION in $TARGET"
+  echo "[help-book] backup of previous version: $TARGET/$BACKUP_DIR/"
+  echo "[help-book] rollback: cp $TARGET/$BACKUP_DIR/*.* $TARGET/ 2>/dev/null; cp $TARGET/$BACKUP_DIR/update $TARGET/ 2>/dev/null"
+elif [ "$MODE" = "update" ]; then
+  echo "[help-book] update complete — $VERSION (already at this version) in $TARGET"
+  echo "[help-book] backup: $TARGET/$BACKUP_DIR/"
+else
+  echo "[help-book] install complete — $VERSION ready in $TARGET"
+  echo "[help-book] serve it with any static server, e.g.: cd $TARGET && python3 -m http.server 8082"
+  if [ -f "$TARGET/update" ]; then
+    echo "[help-book] update later with: bash $TARGET/update"
+  fi
+fi
