@@ -1,6 +1,6 @@
 {
   "title": "Help Book Demo",
-  "version": "v2.5.0-dev",
+  "version": "v2.5.0",
   "accent": "#e8791d",
   "editUrl": "https://github.com/leminkozey/help-book/edit/main/help/{file}",
   "chapters": [

@@ -30,6 +30,10 @@ Copy the `help/` folder into your project, edit `chapters.json`, write markdown 
 - Syntax highlighting (highlight.js) with copy-to-clipboard
 - Mermaid diagram support — ```` ```mermaid ```` code blocks render as SVG (lazy-loaded from CDN, theme-aware)
 - Chart.js support: ```` ```chart ```` code blocks with JSON config render as interactive charts (lazy-loaded from CDN, only when a chart appears on the page)
+- Find-on-page: live highlights as you type, `Enter` / `Shift+Enter` to cycle, cross-chapter results below
+- Heading anchors: hover an H2/H3 to reveal a `#` that copies a deep link to that section
+- Optional "Edit this page on GitHub" link per chapter via `editUrl` in `chapters.json`
+- Images via standard Markdown — paths resolve relative to the chapter file, raw `<img width="…">` allowed for sizing
 - Previous / next chapter navigation
 - Mobile responsive with safe-area insets (iPhone notch aware)
 - Accessible: skip-link, ARIA combobox search, keyboard navigation, `prefers-reduced-motion`
@@ -66,7 +70,7 @@ After the first install, every `help/` folder comes with its own updater:
 
 ```bash
 bash help/update          # → latest release
-bash help/update v2.4.0   # → pin a specific version
+bash help/update v2.5.0   # → pin a specific version
 ```
 
 The wrapper resolves the target relative to itself, so it works regardless of the directory you run it from. Your `chapters.json` and everything under `chapters/` is **never touched** — only the bundled code files are replaced.
@@ -82,7 +86,7 @@ cp help/.help-book-backup/update help/ 2>/dev/null
 
 ```bash
 # Pin a specific version
-curl -fsSL https://raw.githubusercontent.com/leminkozey/help-book/main/scripts/install.sh | bash -s v2.4.0
+curl -fsSL https://raw.githubusercontent.com/leminkozey/help-book/main/scripts/install.sh | bash -s v2.5.0
 
 # Custom target directory (default: ./help)
 HELP_BOOK_DIR=public/docs curl -fsSL https://raw.githubusercontent.com/leminkozey/help-book/main/scripts/install.sh | bash

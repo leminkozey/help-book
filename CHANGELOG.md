@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-05-13
+
+A six-feature release. Most of the work is rendering: diagrams, charts, in-page find, heading anchors, edit-on-GitHub, plus a polish pass on search.
+
 ### Added
 - Configurable "Edit this page on GitHub" link via `editUrl` in `chapters.json`
 - Heading anchor links: hover H2/H3 to reveal a # icon that copies the section URL.
@@ -19,8 +23,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CSP: `script-src` and `connect-src` now include `https://cdn.jsdelivr.net`; `worker-src 'self' blob:` added for mermaid's optional layout workers. Production deployments serving an HTTP CSP header must mirror these.
 - Search results now show a context snippet around the matched term, with the match highlighted.
 
+### Fixed
+- `<img>` paths in chapter markdown are now resolved relative to the chapter's own directory (PR #40 documented this, but `help.js` never wired it up — relative paths 404'd against the SPA root).
+- DOMPurify's URI allowlist accepts bare relative paths like `images/foo.jpg`; previously only `./` and `../`-prefixed paths survived, so the sanitizer silently stripped `src` from any plain-relative image.
+
 ### Documentation
 - Documented image-embedding convention (Markdown syntax, suggested folder layout, sanitizer behavior).
+- Demo chapters rewritten as a feature showcase: every new feature has its own chapter under **What's New**, with the Images chapter as the single place where images and sizing are demonstrated.
 
 ## [2.4.0] - 2026-04-20
 
