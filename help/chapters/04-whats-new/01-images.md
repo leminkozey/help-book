@@ -3,32 +3,32 @@
 Drop a file under `chapters/images/` and reference it from any chapter with normal Markdown:
 
 ```markdown
-![Help Book sidebar in light mode](images/sidebar-mock.svg)
+![Hero image](images/images-hero.jpg)
 ```
 
 Renders as:
 
-![Help Book sidebar in light mode](images/sidebar-mock.svg)
+![Hero image](images/images-hero.jpg)
 
-## Light + dark
+## Multiple images per chapter
 
-Pair shots for theme docs travel well as side-by-side `<img>` tags:
+No special rule — drop in as many as you want. The renderer streams them through DOMPurify like everything else:
 
-<img src="images/sidebar-mock.svg" alt="Sidebar — light" width="230">
-<img src="images/sidebar-mock-dark.svg" alt="Sidebar — dark" width="230">
+![A second photo](images/anchors.jpg)
+
+![A third photo](images/edit.jpg)
 
 ## Sizing
 
 For inline control, fall back to a raw `<img>` tag — the sanitizer keeps `src`, `alt`, `title`, `width`, and `height`:
 
 ```html
-<img src="images/placeholder.svg" alt="Small" width="120">
-<img src="images/placeholder.svg" alt="Large" width="320">
+<img src="images/charts.jpg" alt="Small" width="180">
+<img src="images/charts.jpg" alt="Medium" width="320">
 ```
 
-<img src="images/placeholder.svg" alt="Small" width="120">
-
-<img src="images/placeholder.svg" alt="Large" width="320">
+<img src="images/charts.jpg" alt="Small" width="180">
+<img src="images/charts.jpg" alt="Medium" width="320">
 
 ## Suggested layout
 
@@ -38,13 +38,18 @@ help/
     04-whats-new/
       01-images.md
     images/
-      sidebar-mock.svg
-      sidebar-mock-dark.svg
+      images-hero.jpg
+      anchors.jpg
+      edit.jpg
       placeholder.svg
 ```
 
-Paths resolve relative to the chapter file. External URLs (`https://…`) work too, as long as the host allows hot-linking and the CSP permits the image source.
+Paths resolve relative to the chapter file. External URLs (`https://…`) work too, as long as the host allows hot-linking and your CSP permits the image source. The default CSP ships with `img-src 'self' data:` — local files and inline data-URIs only. Add the host to `img-src` if you want to pull from a CDN.
 
 ## Sanitization
 
 Markdown runs through `marked` and is scrubbed by DOMPurify before hitting the DOM. On `<img>`, only `src`, `alt`, `title`, `width`, `height` survive — event handlers (`onerror`, `onload`) and unknown attributes are stripped. That's the safety net for user-supplied Markdown, not a missing feature.
+
+## Credits
+
+The photos on this page are CC0 from [Lorem Picsum](https://picsum.photos/) — fine to ship, redistribute, or replace.

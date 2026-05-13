@@ -2,7 +2,7 @@
 
 Every chapter can show a muted "Edit this page on GitHub" link at the bottom. Scroll down — there's one on this page right now (above the prev/next nav).
 
-![Edit link preview](images/edit-on-github.svg)
+![A keyboard waiting for your next edit](images/edit.jpg)
 
 ## Setup
 

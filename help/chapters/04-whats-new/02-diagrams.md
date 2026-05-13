@@ -1,5 +1,7 @@
 # Diagrams (Mermaid)
 
+![Wires running somewhere — a real-world graph](images/diagrams.jpg)
+
 A fenced code block tagged `mermaid` renders as an SVG diagram. The library is lazy-loaded from `cdn.jsdelivr.net` — chapters without a diagram never pay the cost.
 
 ## Flowchart
