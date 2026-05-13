@@ -819,37 +819,110 @@
     navigate(id);
   });
 
+  // strip the most disruptive markdown syntax so snippets read like plain text.
+  // not a full parser — good enough for inline preview.
+  function stripMarkdown(text) {
+    return text
+      .replace(/```[\s\S]*?```/g, ' ')           // fenced code blocks
+      .replace(/`([^`]+)`/g, '$1')               // inline code
+      .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')  // images → alt text
+      .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')   // links → label
+      .replace(/^#{1,6}\s+/gm, '')               // heading markers
+      .replace(/(\*\*|__)(.*?)\1/g, '$2')        // bold
+      .replace(/(\*|_)(.*?)\1/g, '$2')           // italic
+      .replace(/^\s*>\s?/gm, '')                 // blockquote
+      .replace(/^\s*[-*+]\s+/gm, '')             // unordered list bullet
+      .replace(/\s+/g, ' ')                      // collapse whitespace
+      .trim();
+  }
+
+  function buildSnippet(text, query) {
+    var clean = stripMarkdown(text);
+    if (!clean) return null;
+    var lower = clean.toLocaleLowerCase('de');
+    var idx = lower.indexOf(query);
+    if (idx === -1) return null;
+    // ~120 chars centered on the match
+    var pad = Math.max(0, Math.floor((120 - query.length) / 2));
+    var start = Math.max(0, idx - pad);
+    var end = Math.min(clean.length, idx + query.length + pad);
+    return {
+      before: (start > 0 ? '…' : '') + clean.substring(start, idx),
+      match:  clean.substring(idx, idx + query.length),
+      after:  clean.substring(idx + query.length, end) + (end < clean.length ? '…' : '')
+    };
+  }
+
+  function buildPreview(text) {
+    var clean = stripMarkdown(text);
+    if (!clean) return '';
+    if (clean.length <= 120) return clean;
+    return clean.substring(0, 120) + '…';
+  }
+
+  // build the snippet element using text nodes + <mark>, so chapter content
+  // never reaches the DOM as raw html.
+  function renderSnippet(container, parts) {
+    if (parts) {
+      container.appendChild(document.createTextNode(parts.before));
+      var mark = document.createElement('mark');
+      mark.textContent = parts.match;
+      container.appendChild(mark);
+      container.appendChild(document.createTextNode(parts.after));
+    }
+  }
+
   function performSearch(query) {
     if (!chaptersReady) return;
     var results = [];
 
     chapters.forEach(function (ch) {
       var text = chapterTexts[ch.id] || '';
-      var lower = text.toLocaleLowerCase('de');
-      var idx = lower.indexOf(query);
-      if (idx === -1) return;
+      var titleLower = (ch.title || '').toLocaleLowerCase('de');
+      var bodyLower = text.toLocaleLowerCase('de');
+      var titleMatch = titleLower.indexOf(query) !== -1;
+      var bodyMatch = bodyLower.indexOf(query) !== -1;
+      if (!titleMatch && !bodyMatch) return;
 
-      var start = Math.max(0, idx - 40);
-      var end = Math.min(text.length, idx + query.length + 60);
-      var snippet = (start > 0 ? '...' : '') +
-        text.substring(start, end).replace(/\n/g, ' ') +
-        (end < text.length ? '...' : '');
-
-      var escaped = escapeHtml(snippet);
-      var re = new RegExp('(' + escapeRegex(escapeHtml(query)) + ')', 'gi');
-      escaped = escaped.replace(re, '<mark>$1</mark>');
-
-      results.push({ id: ch.id, title: ch.title, snippet: escaped });
+      var entry = { id: ch.id, title: ch.title, parts: null, preview: '' };
+      if (bodyMatch) {
+        entry.parts = buildSnippet(text, query);
+      }
+      if (!entry.parts) {
+        // title-only hit or empty body — fall back to first chunk of content
+        entry.preview = buildPreview(text);
+      }
+      results.push(entry);
     });
 
+    $results.innerHTML = '';
     if (results.length === 0) {
-      $results.innerHTML = '<div class="help-search-empty">No results found</div>';
+      var empty = document.createElement('div');
+      empty.className = 'help-search-empty';
+      empty.textContent = 'No results found';
+      $results.appendChild(empty);
     } else {
-      $results.innerHTML = results.slice(0, 10).map(function (r) {
-        return '<a class="help-search-result" href="#' + encodeURIComponent(r.id) + '">' +
-          '<div class="help-search-result-title">' + escapeHtml(r.title) + '</div>' +
-          '<div class="help-search-result-snippet">' + r.snippet + '</div></a>';
-      }).join('');
+      results.slice(0, 10).forEach(function (r) {
+        var a = document.createElement('a');
+        a.className = 'help-search-result';
+        a.href = '#' + encodeURIComponent(r.id);
+
+        var title = document.createElement('div');
+        title.className = 'help-search-result-title';
+        title.textContent = r.title;
+        a.appendChild(title);
+
+        var snippet = document.createElement('div');
+        snippet.className = 'help-search-result-snippet';
+        if (r.parts) {
+          renderSnippet(snippet, r.parts);
+        } else {
+          snippet.textContent = r.preview;
+        }
+        a.appendChild(snippet);
+
+        $results.appendChild(a);
+      });
     }
 
     $results.classList.add('active');
@@ -944,10 +1017,6 @@
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
-  }
-
-  function escapeRegex(str) {
-    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
 })();

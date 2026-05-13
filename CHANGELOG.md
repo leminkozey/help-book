@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - CSP: `script-src` and `connect-src` now include `https://cdn.jsdelivr.net`; `worker-src 'self' blob:` added for mermaid's optional layout workers. Production deployments serving an HTTP CSP header must mirror these.
+- Search results now show a context snippet around the matched term, with the match highlighted.
 
 ### Documentation
 - Documented image-embedding convention (Markdown syntax, suggested folder layout, sanitizer behavior).
