@@ -1,0 +1,54 @@
+name: Bug report
+description: Something is broken or behaving incorrectly.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Short summary of the bug.
+      placeholder: Search results disappear after pressing Enter.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps that trigger the bug.
+      placeholder: |
+        1. Open index.html
+        2. Press Ctrl+K
+        3. Type "foo"
+        4. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected-actual
+    attributes:
+      label: Expected vs actual
+      description: What should happen vs what actually happens.
+      placeholder: |
+        Expected: results stay visible.
+        Actual: results vanish on Enter.
+  - type: input
+    id: version
+    attributes:
+      label: help-book version
+      description: See the footer in the rendered page or the `version` in `chapters.json`.
+      placeholder: v2.4.0
+  - type: input
+    id: browser
+    attributes:
+      label: Browser + version
+      placeholder: Firefox 128, Chrome 131, Safari 17.5
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: Drop images here if relevant.
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Anything else worth knowing.
