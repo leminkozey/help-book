@@ -29,6 +29,7 @@ Copy the `help/` folder into your project, edit `chapters.json`, write markdown 
 - Pill-shaped search and copy buttons; subtle 5%-opacity borders
 - Syntax highlighting (highlight.js) with copy-to-clipboard
 - Mermaid diagram support — ```` ```mermaid ```` code blocks render as SVG (lazy-loaded from CDN, theme-aware)
+- Chart.js support: ```` ```chart ```` code blocks with JSON config render as interactive charts (lazy-loaded from CDN, only when a chart appears on the page)
 - Previous / next chapter navigation
 - Mobile responsive with safe-area insets (iPhone notch aware)
 - Accessible: skip-link, ARIA combobox search, keyboard navigation, `prefers-reduced-motion`
@@ -222,7 +223,7 @@ For production deployments, set these HTTP headers via your reverse proxy:
 X-Content-Type-Options: nosniff
 X-Frame-Options: SAMEORIGIN
 Referrer-Policy: no-referrer
-Content-Security-Policy: default-src 'none'; script-src 'self' https://cdnjs.cloudflare.com 'unsafe-inline'; style-src 'self' https://cdnjs.cloudflare.com https://fonts.googleapis.com 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self' data: https://fonts.gstatic.com; base-uri 'none'; form-action 'none'; frame-ancestors 'self'
+Content-Security-Policy: default-src 'none'; script-src 'self' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdnjs.cloudflare.com https://fonts.googleapis.com 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self' data: https://fonts.gstatic.com; base-uri 'none'; form-action 'none'; frame-ancestors 'self'
 ```
 
 Avoid symlinks inside `help/` — static servers may follow them and leak files outside the directory.

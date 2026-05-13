@@ -111,6 +111,26 @@ graph TD
   C --> E[Search Index]
 ```
 
+## Charts
+
+Fenced code blocks tagged `chart` render as interactive [Chart.js](https://www.chartjs.org/) charts. The library is lazy-loaded from CDN only when a chart appears on the page.
+
+```chart
+{
+  "type": "bar",
+  "data": {
+    "labels": ["Jan", "Feb", "Mar", "Apr", "May"],
+    "datasets": [{
+      "label": "Downloads",
+      "data": [120, 180, 240, 310, 420],
+      "backgroundColor": "#e8791d"
+    }]
+  }
+}
+```
+
+Pass any valid Chart.js config as JSON. Charts adapt to the active theme on toggle.
+
 ## Requirements
 
 - A modern browser (Chrome, Firefox, Safari, Edge)
