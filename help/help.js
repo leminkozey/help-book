@@ -163,7 +163,7 @@
     }
   }
 
-  function navigate(id) {
+  function navigate(id, headingId) {
     var ch = chapters.find(function (c) { return c.id === id; });
     if (!ch) {
       if (chapters.length > 0) navigate(chapters[0].id);
@@ -172,8 +172,14 @@
 
     // set currentId before hash update so hashchange handler can bail without redundant fetch
     currentId = id;
-    if (window.location.hash.slice(1) !== id) {
-      window.location.hash = id;
+    var desiredHash = encodeURIComponent(id) + (headingId ? '--' + encodeURIComponent(headingId) : '');
+    if (window.location.hash.slice(1) !== desiredHash) {
+      // replaceState avoids piling history entries when a heading is targeted
+      if (headingId) {
+        history.replaceState(null, '', location.pathname + location.search + '#' + desiredHash);
+      } else {
+        window.location.hash = id;
+      }
     }
     closeSidebar();
     setActiveNav(id);
@@ -197,7 +203,12 @@
         buildPrevNext();
         // edit-link nach prev/next aufbauen — $article.after() schiebt ihn dann zwischen article und prev/next ein
         buildEditLink();
-        window.scrollTo(0, 0);
+        if (headingId) {
+          // wait a frame so layout settles before scroll
+          requestAnimationFrame(function () { scrollToHeading(headingId); });
+        } else {
+          window.scrollTo(0, 0);
+        }
         if ($main && typeof $main.focus === 'function') {
           $main.focus({ preventScroll: true });
         }
@@ -221,20 +232,39 @@
     }
   }
 
+  function parseHash() {
+    var raw = window.location.hash.slice(1);
+    var chapterPart = raw;
+    var headingPart = '';
+    var sep = raw.indexOf('--');
+    if (sep !== -1) {
+      chapterPart = raw.slice(0, sep);
+      headingPart = raw.slice(sep + 2);
+    }
+    try { chapterPart = decodeURIComponent(chapterPart); } catch (e) { /* leave raw */ }
+    try { headingPart = decodeURIComponent(headingPart); } catch (e) { /* leave raw */ }
+    return { chapter: chapterPart, heading: headingPart };
+  }
+
   function navigateFromHash() {
-    var hash = window.location.hash.slice(1);
-    try { hash = decodeURIComponent(hash); } catch (e) { /* leave raw */ }
-    if (hash && chapters.find(function (c) { return c.id === hash; })) {
-      navigate(hash);
+    var parsed = parseHash();
+    var chapter = parsed.chapter;
+    var heading = parsed.heading;
+    if (chapter && chapters.find(function (c) { return c.id === chapter; })) {
+      navigate(chapter, heading);
     } else if (chapters.length > 0) {
       navigate(chapters[0].id);
     }
   }
 
   window.addEventListener('hashchange', function () {
-    var hash = window.location.hash.slice(1);
-    try { hash = decodeURIComponent(hash); } catch (e) { /* leave raw */ }
-    if (hash !== currentId) navigateFromHash();
+    var parsed = parseHash();
+    // chapter unchanged + heading present → just scroll, don't re-render
+    if (parsed.chapter === currentId) {
+      if (parsed.heading) scrollToHeading(parsed.heading);
+      return;
+    }
+    navigateFromHash();
   });
 
   function renderMarkdown(md) {
@@ -272,11 +302,44 @@
       btn.textContent = 'Copy';
       pre.appendChild(btn);
     });
+
+    // anchor links for h2/h3 — inserted as first child, hidden until hover (see help.css)
+    var anchorable = $article.querySelectorAll('h2, h3');
+    anchorable.forEach(function (h) {
+      var a = document.createElement('a');
+      a.className = 'help-heading-anchor';
+      a.href = '#' + encodeURIComponent(currentId) + '--' + encodeURIComponent(h.id);
+      a.setAttribute('aria-label', 'Copy link to this section');
+      a.dataset.headingAnchor = h.id;
+      a.textContent = '#';
+      h.insertBefore(a, h.firstChild);
+    });
   }
 
   function initArticleDelegation() {
     if (!$article) return;
     $article.addEventListener('click', function (e) {
+      var anchor = e.target.closest('.help-heading-anchor');
+      if (anchor && $article.contains(anchor)) {
+        e.preventDefault();
+        var headingId = anchor.dataset.headingAnchor;
+        if (!headingId || !currentId) return;
+        var hash = '#' + encodeURIComponent(currentId) + '--' + encodeURIComponent(headingId);
+        var url = location.origin + location.pathname + location.search + hash;
+        // replaceState updates the URL without a history entry and without firing hashchange — avoids re-running navigate()
+        history.replaceState(null, '', url);
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(function () {
+            showToast('Link copied');
+          }).catch(function () {
+            showToast('Copy failed — link is in the address bar');
+          });
+        } else {
+          showToast('Link is in the address bar');
+        }
+        return;
+      }
+
       var btn = e.target.closest('.help-copy-btn');
       if (!btn || !$article.contains(btn)) return;
       var pre = btn.closest('pre');
@@ -290,6 +353,29 @@
         });
       }
     });
+  }
+
+  var toastEl = null;
+  var toastTimer = null;
+  function showToast(message) {
+    if (!toastEl) {
+      toastEl = document.createElement('div');
+      toastEl.className = 'help-toast';
+      toastEl.setAttribute('role', 'status');
+      toastEl.setAttribute('aria-live', 'polite');
+      document.body.appendChild(toastEl);
+    }
+    toastEl.textContent = message;
+    // restart css fade by toggling class off and on across frames
+    toastEl.classList.remove('visible');
+    if (toastTimer) clearTimeout(toastTimer);
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { toastEl.classList.add('visible'); });
+    });
+    toastTimer = setTimeout(function () {
+      if (toastEl) toastEl.classList.remove('visible');
+      toastTimer = null;
+    }, 1200);
   }
 
   var tocObserver = null;
