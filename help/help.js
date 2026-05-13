@@ -5,6 +5,7 @@
   // hold full markdown for every chapter — search needs full text, dropping would force re-fetches
   var chapterTexts = Object.create(null);
   var currentId = null;
+  var editUrlTemplate = '';
   var chaptersReady = false;
   var activeNavEl = null;
   var scrollHeadingTimer = null;
@@ -55,6 +56,9 @@
         }
         $title.textContent = data.title || 'Help';
         document.title = data.title || 'Help';
+        if (typeof data.editUrl === 'string' && /^https?:\/\//i.test(data.editUrl)) {
+          editUrlTemplate = data.editUrl;
+        }
         buildNav(data.chapters, $nav);
         flattenChapters(data.chapters);
         preloadChapters();
@@ -191,6 +195,8 @@
         renderMarkdown(md);
         buildToc();
         buildPrevNext();
+        // edit-link nach prev/next aufbauen — $article.after() schiebt ihn dann zwischen article und prev/next ein
+        buildEditLink();
         window.scrollTo(0, 0);
         if ($main && typeof $main.focus === 'function') {
           $main.focus({ preventScroll: true });
@@ -415,6 +421,31 @@
     requestAnimationFrame(function () {
       requestAnimationFrame(function () { scrollSpyLocked = false; });
     });
+  }
+
+  function buildEditLink() {
+    var old = document.querySelector('.help-edit-link');
+    if (old) old.remove();
+    if (!editUrlTemplate) return;
+    var ch = chapters.find(function (c) { return c.id === currentId; });
+    if (!ch || !ch.file) return;
+
+    var url = editUrlTemplate.replace(/\{file\}/g, encodeURI(ch.file));
+
+    var a = document.createElement('a');
+    a.className = 'help-edit-link';
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.innerHTML =
+      '<svg class="help-edit-link-icon" width="14" height="14" viewBox="0 0 24 24" ' +
+      'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
+      'stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M12 20h9"/>' +
+      '<path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>' +
+      '</svg>' +
+      '<span>Edit this page on GitHub</span>';
+    $article.after(a);
   }
 
   function buildPrevNext() {

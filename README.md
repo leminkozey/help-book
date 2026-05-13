@@ -157,6 +157,7 @@ Everything is configured in `chapters.json`:
 | `title` | Header and browser tab title |
 | `version` | Shown in footer (optional) |
 | `accent` | CSS accent color — accepts hex, `rgb(...)`, `hsl(...)`, `oklch(...)` (default: warm orange `#e8791d`) |
+| `editUrl` | Optional URL template for an "Edit this page on GitHub" link rendered under each chapter. Use `{file}` as a placeholder for the chapter's `file` value, e.g. `https://github.com/you/repo/edit/main/help/{file}`. Omit the key to hide the link. |
 | `chapters` | Ordered list of chapter objects |
 
 Chapters can be nested one level deep. Parent chapters can optionally have their own `file`.
