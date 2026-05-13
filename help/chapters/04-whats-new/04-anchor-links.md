@@ -2,8 +2,6 @@
 
 Hover any H2 or H3 in this chapter and a `#` appears to the left of the heading. Click it to copy a deep link straight to that section.
 
-![A chain — like the kind of link you copy from a heading anchor](images/anchors.jpg)
-
 ## How it looks
 
 Move your mouse over any of the headings below. On touch devices the anchor stays visible at low contrast.

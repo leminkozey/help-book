@@ -2,8 +2,6 @@
 
 The Help Book is a standalone, drop-in documentation system for any web project. No build step, no npm, no framework — copy a folder, write Markdown, serve as static files.
 
-![A quiet workspace — the kind of thing you write docs for](images/welcome.jpg)
-
 This demo doubles as a showcase: every chapter under **What's New** demonstrates one of the features added in the latest release.
 
 ## Installation

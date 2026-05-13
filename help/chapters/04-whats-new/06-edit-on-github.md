@@ -2,8 +2,6 @@
 
 Every chapter can show a muted "Edit this page on GitHub" link at the bottom. Scroll down — there's one on this page right now (above the prev/next nav).
 
-![A keyboard waiting for your next edit](images/edit.jpg)
-
 ## Setup
 
 Add a single key to `chapters.json`:
