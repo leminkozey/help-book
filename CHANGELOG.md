@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Configurable "Edit this page on GitHub" link via `editUrl` in `chapters.json`
 - Heading anchor links: hover H2/H3 to reveal a # icon that copies the section URL.
+- Mermaid diagram support: ```` ```mermaid ```` code blocks render as SVG diagrams (lazy-loaded from CDN). Chapters without diagrams pay nothing. Theme tracks the help-book light/dark toggle.
+
+### Changed
+- CSP: `script-src` and `connect-src` now include `https://cdn.jsdelivr.net`; `worker-src 'self' blob:` added for mermaid's optional layout workers. Production deployments serving an HTTP CSP header must mirror these.
 
 ### Documentation
 - Documented image-embedding convention (Markdown syntax, suggested folder layout, sanitizer behavior).
