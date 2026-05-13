@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Configurable "Edit this page on GitHub" link via `editUrl` in `chapters.json`
+
 ## [2.4.0] - 2026-04-20
 
 Install/update ergonomics: one-shot update command, automatic rollback snapshot. No breaking changes — existing installs keep working unchanged until they update once.
