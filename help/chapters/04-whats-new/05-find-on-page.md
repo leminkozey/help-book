@@ -2,8 +2,6 @@
 
 The search box pulls double duty: typing two or more characters highlights matches **on this page** inline (like browser find) and lists hits in **other chapters** below.
 
-![Looking closely — the find-on-page UX in one photo](images/find.jpg)
-
 ## Try it now
 
 1. Press `Ctrl+K` or `Cmd+K` to focus search

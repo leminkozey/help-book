@@ -1,5 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80" width="200" height="80" role="img" aria-label="Placeholder image">
-  <rect width="200" height="80" rx="8" fill="#e8791d" opacity="0.12"/>
-  <rect x="0.5" y="0.5" width="199" height="79" rx="8" fill="none" stroke="#e8791d" stroke-opacity="0.4"/>
-  <text x="100" y="46" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" fill="#e8791d">placeholder image</text>
-</svg>

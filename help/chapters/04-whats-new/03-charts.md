@@ -1,7 +1,5 @@
 # Charts (Chart.js)
 
-![Numbers and dashboards in the wild](images/charts.jpg)
-
 A fenced code block tagged `chart` with a Chart.js config (as JSON) renders as an interactive chart. Chart.js is loaded from `cdn.jsdelivr.net` on demand — chapters without a chart pay no cost.
 
 ## Bar
