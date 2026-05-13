@@ -840,7 +840,7 @@
   });
 
   $results.addEventListener('click', function (e) {
-    // nav buttons inside the "auf dieser seite" counter
+    // nav buttons inside the in-page counter row
     var navBtn = e.target.closest('[data-find-nav]');
     if (navBtn) {
       e.preventDefault();
@@ -967,9 +967,9 @@
     var counter = $results.querySelector('[data-find-counter]');
     if (!counter) return;
     if (!findMarks.length) {
-      counter.textContent = 'Keine Treffer hier';
+      counter.textContent = 'No matches on this page';
     } else {
-      counter.textContent = (currentMatchIdx + 1) + ' von ' + findMarks.length + ' auf dieser Seite';
+      counter.textContent = (currentMatchIdx + 1) + ' of ' + findMarks.length + ' on this page';
     }
   }
 
@@ -1031,7 +1031,7 @@
     var results = [];
 
     chapters.forEach(function (ch) {
-      // hide current chapter from "andere kapitel" — user is already here
+      // hide current chapter from "other chapters" — user is already on it
       if (ch.id === currentId) return;
       var text = chapterTexts[ch.id] || '';
       var titleLower = (ch.title || '').toLocaleLowerCase('de');
@@ -1067,13 +1067,13 @@
     prevBtn.type = 'button';
     prevBtn.className = 'help-find-nav-btn';
     prevBtn.dataset.findNav = 'prev';
-    prevBtn.setAttribute('aria-label', 'Vorheriger Treffer');
+    prevBtn.setAttribute('aria-label', 'Previous match');
     prevBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3,8 6,4 9,8"/></svg>';
     var nextBtn = document.createElement('button');
     nextBtn.type = 'button';
     nextBtn.className = 'help-find-nav-btn';
     nextBtn.dataset.findNav = 'next';
-    nextBtn.setAttribute('aria-label', 'Naechster Treffer');
+    nextBtn.setAttribute('aria-label', 'Next match');
     nextBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3,4 6,8 9,4"/></svg>';
     navWrap.appendChild(prevBtn);
     navWrap.appendChild(nextBtn);
@@ -1081,11 +1081,11 @@
     $results.appendChild(counterRow);
     updateFindCounter();
 
-    // "andere kapitel" section
+    // "other chapters" section
     if (results.length > 0) {
       var header = document.createElement('div');
       header.className = 'help-find-section-header';
-      header.textContent = 'Andere Kapitel';
+      header.textContent = 'Other chapters';
       $results.appendChild(header);
 
       results.slice(0, 10).forEach(function (r) {
@@ -1113,7 +1113,7 @@
       // nothing here, nothing elsewhere
       var empty = document.createElement('div');
       empty.className = 'help-search-empty';
-      empty.textContent = 'Keine Ergebnisse';
+      empty.textContent = 'No results';
       $results.appendChild(empty);
     }
 
