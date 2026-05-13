@@ -209,6 +209,17 @@
         } else {
           window.scrollTo(0, 0);
         }
+        // re-apply find highlights in the freshly rendered chapter (cross-chapter jump)
+        if (lastQueryRaw && lastQueryRaw.length >= 2) {
+          applyFindHighlights(lastQueryRaw);
+          if (pendingFindAfterRender && findMarks.length) {
+            pendingFindAfterRender = false;
+            requestAnimationFrame(function () { gotoMatch(0); });
+          } else {
+            pendingFindAfterRender = false;
+          }
+          if ($results.classList.contains('active')) updateFindCounter();
+        }
         if ($main && typeof $main.focus === 'function') {
           $main.focus({ preventScroll: true });
         }
@@ -776,48 +787,191 @@
   }
 
   var searchTimeout = null;
+  // in-page find state
+  var findMarks = [];          // <mark> nodes in render order
+  var currentMatchIdx = -1;    // active index into findMarks
+  var lastQueryRaw = '';       // last query as typed (preserves case for re-apply)
+  var pendingFindAfterRender = false; // re-apply highlights after navigate() renders
+  // skip text inside these containers when wrapping matches
+  var FIND_SKIP_SELECTOR = 'mark, .help-heading-anchor, .help-copy-btn';
 
   $search.addEventListener('input', function () {
     clearTimeout(searchTimeout);
-    var raw = $search.value.trim();
+    var raw = $search.value;
     if (raw.length > 200) raw = raw.slice(0, 200);
-    var q = raw.toLocaleLowerCase('de');
+    lastQueryRaw = raw.trim();
+    var q = lastQueryRaw.toLocaleLowerCase('de');
     if (q.length < 2) {
+      clearFindHighlights();
       $results.classList.remove('active');
       $results.innerHTML = '';
       return;
     }
     if (!chaptersReady) {
+      clearFindHighlights();
       $results.innerHTML = '<div class="help-search-empty">Indexing…</div>';
       $results.classList.add('active');
       return;
     }
+    // immediate in-page highlight feels responsive, cross-chapter list can debounce
+    applyFindHighlights(lastQueryRaw);
     searchTimeout = setTimeout(function () { performSearch(q); }, 150);
   });
 
   $search.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
-      $search.value = '';
-      $results.classList.remove('active');
+      closeFind();
       $search.blur();
+      return;
+    }
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (!findMarks.length) return;
+      if (e.shiftKey) gotoMatch(currentMatchIdx - 1);
+      else gotoMatch(currentMatchIdx + 1);
     }
   });
 
   document.addEventListener('click', function (e) {
-    if (!e.target.closest('.help-search-wrapper')) {
-      $results.classList.remove('active');
-    }
+    if (e.target.closest('.help-search-wrapper')) return;
+    if (e.target.closest('.help-find-mark')) return;
+    // click outside: close popup AND clear highlights (per spec)
+    closeFind();
   });
 
   $results.addEventListener('click', function (e) {
+    // nav buttons inside the in-page counter row
+    var navBtn = e.target.closest('[data-find-nav]');
+    if (navBtn) {
+      e.preventDefault();
+      if (!findMarks.length) return;
+      if (navBtn.dataset.findNav === 'prev') gotoMatch(currentMatchIdx - 1);
+      else gotoMatch(currentMatchIdx + 1);
+      return;
+    }
+
     var result = e.target.closest('.help-search-result');
     if (!result) return;
     e.preventDefault();
     var id = result.getAttribute('href').slice(1);
-    $search.value = '';
-    $results.classList.remove('active');
-    navigate(id);
+    // keep the query, re-apply highlights after the new chapter renders
+    if (id !== currentId) {
+      pendingFindAfterRender = true;
+      navigate(id);
+    } else {
+      // already here — just jump to first match
+      if (findMarks.length) gotoMatch(0);
+    }
   });
+
+  function closeFind() {
+    $search.value = '';
+    lastQueryRaw = '';
+    pendingFindAfterRender = false;
+    $results.classList.remove('active');
+    $results.innerHTML = '';
+    clearFindHighlights();
+  }
+
+  // walk text nodes inside $article and wrap matches of query (case-insensitive)
+  // in <mark class="help-find-mark">. skips pre/code/anchor blocks.
+  function applyFindHighlights(rawQuery) {
+    clearFindHighlights();
+    if (!rawQuery || rawQuery.length < 2 || !$article) return;
+    var qLower = rawQuery.toLocaleLowerCase('de');
+    var qLen = rawQuery.length;
+
+    var walker = document.createTreeWalker($article, NodeFilter.SHOW_TEXT, {
+      acceptNode: function (node) {
+        if (!node.nodeValue) return NodeFilter.FILTER_REJECT;
+        var p = node.parentNode;
+        while (p && p !== $article) {
+          if (p.nodeType === 1 && p.matches && p.matches(FIND_SKIP_SELECTOR)) {
+            return NodeFilter.FILTER_REJECT;
+          }
+          p = p.parentNode;
+        }
+        // cheap reject: only wrap if the text actually contains the query
+        if (node.nodeValue.toLocaleLowerCase('de').indexOf(qLower) === -1) {
+          return NodeFilter.FILTER_REJECT;
+        }
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+
+    var hits = [];
+    var n;
+    while ((n = walker.nextNode())) hits.push(n);
+
+    hits.forEach(function (textNode) {
+      var text = textNode.nodeValue;
+      var lower = text.toLocaleLowerCase('de');
+      var frag = document.createDocumentFragment();
+      var last = 0;
+      var idx = lower.indexOf(qLower);
+      while (idx !== -1) {
+        if (idx > last) frag.appendChild(document.createTextNode(text.slice(last, idx)));
+        var mark = document.createElement('mark');
+        mark.className = 'help-find-mark';
+        // preserve original casing from the source text
+        mark.textContent = text.slice(idx, idx + qLen);
+        frag.appendChild(mark);
+        findMarks.push(mark);
+        last = idx + qLen;
+        idx = lower.indexOf(qLower, last);
+      }
+      if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+      textNode.parentNode.replaceChild(frag, textNode);
+    });
+
+    currentMatchIdx = -1;
+  }
+
+  function clearFindHighlights() {
+    if (!findMarks.length) {
+      currentMatchIdx = -1;
+      return;
+    }
+    findMarks.forEach(function (mark) {
+      var parent = mark.parentNode;
+      if (!parent) return;
+      // replace mark with its text content and merge with neighboring text nodes
+      var textNode = document.createTextNode(mark.textContent);
+      parent.replaceChild(textNode, mark);
+      parent.normalize();
+    });
+    findMarks = [];
+    currentMatchIdx = -1;
+  }
+
+  function gotoMatch(idx) {
+    if (!findMarks.length) return;
+    // wrap around
+    if (idx < 0) idx = findMarks.length - 1;
+    if (idx >= findMarks.length) idx = 0;
+    if (currentMatchIdx >= 0 && findMarks[currentMatchIdx]) {
+      findMarks[currentMatchIdx].classList.remove('help-find-mark--active');
+    }
+    currentMatchIdx = idx;
+    var el = findMarks[idx];
+    el.classList.add('help-find-mark--active');
+    try {
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    } catch (e) {
+      el.scrollIntoView();
+    }
+    updateFindCounter();
+  }
+
+  function updateFindCounter() {
+    var counter = $results.querySelector('[data-find-counter]');
+    if (!counter) return;
+    if (!findMarks.length) {
+      counter.textContent = 'No matches on this page';
+    } else {
+      counter.textContent = (currentMatchIdx + 1) + ' of ' + findMarks.length + ' on this page';
+    }
+  }
 
   // strip the most disruptive markdown syntax so snippets read like plain text.
   // not a full parser — good enough for inline preview.
@@ -877,6 +1031,8 @@
     var results = [];
 
     chapters.forEach(function (ch) {
+      // hide current chapter from "other chapters" — user is already on it
+      if (ch.id === currentId) return;
       var text = chapterTexts[ch.id] || '';
       var titleLower = (ch.title || '').toLocaleLowerCase('de');
       var bodyLower = text.toLocaleLowerCase('de');
@@ -896,12 +1052,42 @@
     });
 
     $results.innerHTML = '';
-    if (results.length === 0) {
-      var empty = document.createElement('div');
-      empty.className = 'help-search-empty';
-      empty.textContent = 'No results found';
-      $results.appendChild(empty);
-    } else {
+
+    // top row: in-page counter + prev/next buttons
+    var counterRow = document.createElement('div');
+    counterRow.className = 'help-find-counter-row';
+    var counter = document.createElement('span');
+    counter.className = 'help-find-counter';
+    counter.setAttribute('data-find-counter', '');
+    counterRow.appendChild(counter);
+
+    var navWrap = document.createElement('span');
+    navWrap.className = 'help-find-nav';
+    var prevBtn = document.createElement('button');
+    prevBtn.type = 'button';
+    prevBtn.className = 'help-find-nav-btn';
+    prevBtn.dataset.findNav = 'prev';
+    prevBtn.setAttribute('aria-label', 'Previous match');
+    prevBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3,8 6,4 9,8"/></svg>';
+    var nextBtn = document.createElement('button');
+    nextBtn.type = 'button';
+    nextBtn.className = 'help-find-nav-btn';
+    nextBtn.dataset.findNav = 'next';
+    nextBtn.setAttribute('aria-label', 'Next match');
+    nextBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3,4 6,8 9,4"/></svg>';
+    navWrap.appendChild(prevBtn);
+    navWrap.appendChild(nextBtn);
+    counterRow.appendChild(navWrap);
+    $results.appendChild(counterRow);
+    updateFindCounter();
+
+    // "other chapters" section
+    if (results.length > 0) {
+      var header = document.createElement('div');
+      header.className = 'help-find-section-header';
+      header.textContent = 'Other chapters';
+      $results.appendChild(header);
+
       results.slice(0, 10).forEach(function (r) {
         var a = document.createElement('a');
         a.className = 'help-search-result';
@@ -923,6 +1109,12 @@
 
         $results.appendChild(a);
       });
+    } else if (!findMarks.length) {
+      // nothing here, nothing elsewhere
+      var empty = document.createElement('div');
+      empty.className = 'help-search-empty';
+      empty.textContent = 'No results';
+      $results.appendChild(empty);
     }
 
     $results.classList.add('active');
