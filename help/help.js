@@ -461,7 +461,7 @@
     var blocks = $article.querySelectorAll('pre > code.language-chart');
     if (!blocks.length) return;
 
-    // collect specs first, swap each <pre> for a wrapper so injected canvas bypasses sanitizer
+    // collect specs first so the loadChartLib promise can fan out across all wrappers
     var jobs = [];
     blocks.forEach(function (code) {
       var pre = code.parentElement;
