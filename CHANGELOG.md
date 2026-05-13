@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Configurable "Edit this page on GitHub" link via `editUrl` in `chapters.json`
 - Heading anchor links: hover H2/H3 to reveal a # icon that copies the section URL.
 
+### Documentation
+- Documented image-embedding convention (Markdown syntax, suggested folder layout, sanitizer behavior).
+
 ## [2.4.0] - 2026-04-20
 
 Install/update ergonomics: one-shot update command, automatic rollback snapshot. No breaking changes — existing installs keep working unchanged until they update once.

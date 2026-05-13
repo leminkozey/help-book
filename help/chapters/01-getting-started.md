@@ -67,6 +67,38 @@ Your `chapters.json` and everything under `chapters/` is **never touched**. Befo
 
 > **Tip:** Use `Ctrl+K` / `Cmd+K` to quickly search across all chapters.
 
+## Adding Images
+
+Images use standard Markdown syntax — no special setup required:
+
+```markdown
+![A friendly placeholder](images/placeholder.svg)
+```
+
+Renders as:
+
+![A friendly placeholder](images/placeholder.svg)
+
+The suggested layout is an `images/` folder right next to your chapter files:
+
+```
+help/
+  chapters/
+    01-getting-started.md
+    images/
+      placeholder.svg
+```
+
+Paths are resolved relative to the chapter file, so the example above looks up `help/chapters/images/placeholder.svg`. External URLs (`https://...`) work too.
+
+If you need more control — sizing, alignment via wrapper, etc. — drop in a raw `<img>` tag:
+
+```html
+<img src="images/placeholder.svg" alt="Placeholder" width="200">
+```
+
+DOMPurify sanitizes every rendered chapter, so only safe attributes survive on `<img>`: `src`, `alt`, `title`, `width`, `height`. Event handlers like `onerror` and unknown attributes get stripped — that's a feature, not a bug.
+
 ## Requirements
 
 - A modern browser (Chrome, Firefox, Safari, Edge)

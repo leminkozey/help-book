@@ -162,6 +162,34 @@ Everything is configured in `chapters.json`:
 
 Chapters can be nested one level deep. Parent chapters can optionally have their own `file`.
 
+## Embedding Images
+
+Images work the same way they do in regular Markdown — drop a file somewhere reachable by the static server and reference it from your chapter:
+
+```markdown
+![Sidebar in dark mode](images/sidebar-dark.png)
+```
+
+If you need more control over sizing, fall back to a raw `<img>` tag:
+
+```html
+<img src="images/sidebar-dark.png" alt="Sidebar in dark mode" width="600">
+```
+
+The suggested layout is a per-chapters `images/` folder, referenced relative to the chapter file:
+
+```
+help/
+  chapters/
+    01-getting-started.md
+    images/
+      sidebar-dark.png
+```
+
+External URLs (`https://...`) work too, as long as the host allows hot-linking and your CSP permits the image source.
+
+**A note on sanitization:** Markdown is rendered through `marked` and then scrubbed by DOMPurify. For `<img>` only a small set of attributes survives — `src`, `alt`, `title`, `width`, `height`. Event handlers (`onerror`, `onload`, ...) and anything else get stripped. That's intentional, not a bug: it's what keeps user-supplied Markdown safe to render.
+
 ## Theming
 
 Override CSS variables in `help.css` for deeper customization:
