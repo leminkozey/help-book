@@ -309,7 +309,7 @@
       var a = document.createElement('a');
       a.className = 'help-heading-anchor';
       a.href = '#' + encodeURIComponent(currentId) + '--' + encodeURIComponent(h.id);
-      a.setAttribute('aria-label', 'Link zu diesem Abschnitt kopieren');
+      a.setAttribute('aria-label', 'Copy link to this section');
       a.dataset.headingAnchor = h.id;
       a.textContent = '#';
       h.insertBefore(a, h.firstChild);
@@ -326,16 +326,16 @@
         if (!headingId || !currentId) return;
         var hash = '#' + encodeURIComponent(currentId) + '--' + encodeURIComponent(headingId);
         var url = location.origin + location.pathname + location.search + hash;
-        // replaceState so hash change doesn't pile up in history and skip the hashchange handler
+        // replaceState updates the URL without a history entry and without firing hashchange — avoids re-running navigate()
         history.replaceState(null, '', url);
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(url).then(function () {
-            showToast('Link kopiert');
+            showToast('Link copied');
           }).catch(function () {
-            showToast('Link kopiert');
+            showToast('Copy failed — link is in the address bar');
           });
         } else {
-          showToast('Link kopiert');
+          showToast('Link is in the address bar');
         }
         return;
       }
