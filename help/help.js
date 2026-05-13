@@ -321,7 +321,6 @@
 
   // mermaid integration — lazy-loaded from CDN only when needed
   var mermaidPromise = null;
-  var mermaidCounter = 0;
 
   function currentMermaidTheme() {
     return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default';
@@ -360,7 +359,6 @@
       var src = code.textContent;
       var div = document.createElement('div');
       div.className = 'mermaid';
-      div.dataset.mermaidId = 'mermaid-' + (++mermaidCounter);
       div.dataset.mermaidSource = src;
       div.textContent = src;
       pre.replaceWith(div);
