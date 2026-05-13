@@ -293,8 +293,9 @@
       usedIds[h.id] = true;
     });
 
-    // extract mermaid code blocks before copy buttons attach — diagram doesn't need a copy btn
+    // extract mermaid/chart code blocks before copy buttons attach — they don't need copy btns
     processMermaidBlocks();
+    processChartBlocks();
 
     // click handler is delegated on $article, see initArticleDelegation
     var pres = $article.querySelectorAll('pre');
@@ -416,6 +417,119 @@
       .catch(function (err) {
         sources.forEach(function (s) { renderMermaidFallback(s.el, s.src, err); });
       });
+  }
+
+  // chart.js integration — lazy-loaded, theme-aware
+  var chartInstances = [];
+  var chartLoaderPromise = null;
+  var CHART_CDN = 'https://cdn.jsdelivr.net/npm/chart.js@4';
+
+  function loadChartLib() {
+    if (window.Chart) return Promise.resolve(window.Chart);
+    if (chartLoaderPromise) return chartLoaderPromise;
+    chartLoaderPromise = new Promise(function (resolve, reject) {
+      var s = document.createElement('script');
+      s.src = CHART_CDN;
+      s.async = true;
+      s.crossOrigin = 'anonymous';
+      s.referrerPolicy = 'no-referrer';
+      s.onload = function () {
+        if (window.Chart) resolve(window.Chart);
+        else reject(new Error('Chart.js loaded but global missing'));
+      };
+      s.onerror = function () { reject(new Error('Failed to load Chart.js')); };
+      document.head.appendChild(s);
+    });
+    return chartLoaderPromise;
+  }
+
+  function applyChartDefaults() {
+    if (!window.Chart) return;
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    var styles = getComputedStyle(document.documentElement);
+    var textColor = styles.getPropertyValue('--help-text-body').trim() || (dark ? '#d4d4d4' : '#333');
+    var gridColor = dark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+    var borderColor = dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)';
+    window.Chart.defaults.color = textColor;
+    window.Chart.defaults.borderColor = borderColor;
+    if (window.Chart.defaults.scale && window.Chart.defaults.scale.grid) {
+      window.Chart.defaults.scale.grid.color = gridColor;
+    }
+  }
+
+  function processChartBlocks() {
+    var blocks = $article.querySelectorAll('pre > code.language-chart');
+    if (!blocks.length) return;
+
+    // collect specs first, swap each <pre> for a wrapper so injected canvas bypasses sanitizer
+    var jobs = [];
+    blocks.forEach(function (code) {
+      var pre = code.parentElement;
+      if (!pre) return;
+      var source = code.textContent;
+      var wrapper = document.createElement('div');
+      wrapper.className = 'help-chart';
+      var canvas = document.createElement('canvas');
+      wrapper.appendChild(canvas);
+      pre.replaceWith(wrapper);
+      jobs.push({ wrapper: wrapper, canvas: canvas, source: source });
+    });
+
+    loadChartLib()
+      .then(function () {
+        applyChartDefaults();
+        jobs.forEach(function (job) { renderChart(job); });
+      })
+      .catch(function (err) {
+        jobs.forEach(function (job) { renderChartError(job, err.message); });
+      });
+  }
+
+  function renderChart(job) {
+    var config;
+    try {
+      config = JSON.parse(job.source);
+    } catch (e) {
+      renderChartError(job, 'invalid JSON: ' + e.message);
+      return;
+    }
+    config.options = config.options || {};
+    if (config.options.responsive === undefined) config.options.responsive = true;
+    if (config.options.maintainAspectRatio === undefined) config.options.maintainAspectRatio = false;
+    try {
+      var inst = new window.Chart(job.canvas, config);
+      chartInstances.push({ instance: inst, source: job.source, wrapper: job.wrapper });
+    } catch (e) {
+      renderChartError(job, 'chart init failed: ' + e.message);
+    }
+  }
+
+  function renderChartError(job, msg) {
+    var pre = document.createElement('pre');
+    pre.className = 'help-chart-error';
+    var err = document.createElement('div');
+    err.className = 'help-chart-error-msg';
+    err.textContent = 'Chart error: ' + msg;
+    var code = document.createElement('code');
+    code.textContent = job.source;
+    pre.appendChild(err);
+    pre.appendChild(code);
+    job.wrapper.replaceWith(pre);
+  }
+
+  function refreshChartsForTheme() {
+    if (!window.Chart || !chartInstances.length) return;
+    applyChartDefaults();
+    // destroy + recreate so axes/grid pick up new colors
+    var snapshot = chartInstances.slice();
+    chartInstances = [];
+    snapshot.forEach(function (rec) {
+      try { rec.instance.destroy(); } catch (e) { /* ignore */ }
+      var canvas = document.createElement('canvas');
+      rec.wrapper.innerHTML = '';
+      rec.wrapper.appendChild(canvas);
+      renderChart({ wrapper: rec.wrapper, canvas: canvas, source: rec.source });
+    });
   }
 
   function initArticleDelegation() {
@@ -773,8 +887,9 @@
     }
     setHljsTheme(dark);
     if ($theme) $theme.setAttribute('aria-pressed', dark ? 'true' : 'false');
-    // re-render any mermaid diagrams with the new theme — no-op if mermaid never loaded
+    // re-render mermaid/chart with new theme — no-ops if those libs never loaded
     reRenderMermaid();
+    refreshChartsForTheme();
   }
 
   function initTheme() {
