@@ -3,12 +3,19 @@
 Drop a file under `chapters/images/` and reference it from any chapter with normal Markdown:
 
 ```markdown
-![A friendly placeholder](images/placeholder.svg)
+![Help Book sidebar in light mode](images/sidebar-mock.svg)
 ```
 
 Renders as:
 
-![A friendly placeholder](images/placeholder.svg)
+![Help Book sidebar in light mode](images/sidebar-mock.svg)
+
+## Light + dark
+
+Pair shots for theme docs travel well as side-by-side `<img>` tags:
+
+<img src="images/sidebar-mock.svg" alt="Sidebar — light" width="230">
+<img src="images/sidebar-mock-dark.svg" alt="Sidebar — dark" width="230">
 
 ## Sizing
 
@@ -31,6 +38,8 @@ help/
     04-whats-new/
       01-images.md
     images/
+      sidebar-mock.svg
+      sidebar-mock-dark.svg
       placeholder.svg
 ```
 
