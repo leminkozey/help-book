@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Heading anchor links: hover H2/H3 to reveal a # icon that copies the section URL.
 - Mermaid diagram support: ```` ```mermaid ```` code blocks render as SVG diagrams (lazy-loaded from CDN). Chapters without diagrams pay nothing. Theme tracks the help-book light/dark toggle.
 - Chart.js support: ```` ```chart ```` code blocks with JSON config render as interactive charts (lazy-loaded). Library is fetched from `cdn.jsdelivr.net` on demand — pages without a chart pay no cost. Charts re-render on theme toggle so axis/grid colors match. JSON parse and chart-init errors fall back to the original source plus an error banner.
+- PR template and issue forms (bug report, feature request)
 
 ### Changed
 - CSP: `script-src` and `connect-src` now include `https://cdn.jsdelivr.net`; `worker-src 'self' blob:` added for mermaid's optional layout workers. Production deployments serving an HTTP CSP header must mirror these.
