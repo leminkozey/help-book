@@ -781,6 +781,32 @@ body {
   opacity: 1;
 }
 
+.help-chart {
+  position: relative;
+  height: 320px;
+  max-width: 100%;
+  margin: 24px 0;
+  padding: 16px;
+  background: var(--help-card-bg);
+  border: 1px solid var(--help-border);
+  border-radius: var(--help-radius-lg);
+}
+
+.help-chart canvas { max-width: 100%; }
+
+.help-chart-error {
+  border-color: color-mix(in srgb, var(--help-accent) 40%, var(--help-border-strong));
+}
+
+.help-chart-error-msg {
+  padding: 12px 20px;
+  font-family: var(--help-font-mono);
+  font-size: 12px;
+  color: var(--help-accent-deep);
+  background: var(--help-accent-light);
+  border-bottom: 1px solid var(--help-border);
+}
+
 .help-article table {
   width: 100%;
   border-collapse: separate;
