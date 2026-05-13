@@ -280,12 +280,19 @@
 
   function renderMarkdown(md) {
     var clean = DOMPurify.sanitize(marked.parse(md), {
-      ALLOWED_URI_REGEXP: /^(?:https?|mailto|tel|#|\/|\.\/|\.\.\/)/i,
+      // allow https/mailto/tel schemes, fragments, absolute + any relative path (any URI without a scheme colon).
+      // blocks javascript:, data:, vbscript:, etc.
+      ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[#/]|[^:]*(?:\/|$))/i,
       FORBID_TAGS: ['svg', 'math', 'form', 'iframe', 'object', 'embed'],
       FORBID_ATTR: ['style'],
       ADD_ATTR: ['target', 'rel'],
     });
     $article.innerHTML = clean;
+
+    // resolve relative <img> src against the chapter's own directory — without this the
+    // browser resolves against the SPA root (index.html), so `images/foo.jpg` inside
+    // chapters/sub/file.md would 404 at /images/foo.jpg instead of /chapters/sub/images/foo.jpg
+    resolveChapterRelativeImages();
 
     // todo: demote first H1 to H2 (multiple H1s per SPA view) — skipped, chapter css targets h1 explicitly
     var usedIds = Object.create(null);
@@ -328,6 +335,20 @@
       a.dataset.headingAnchor = h.id;
       a.textContent = '#';
       h.insertBefore(a, h.firstChild);
+    });
+  }
+
+  function resolveChapterRelativeImages() {
+    var ch = chapters.find(function (c) { return c.id === currentId; });
+    if (!ch || !ch.file) return;
+    var slash = ch.file.lastIndexOf('/');
+    if (slash === -1) return;
+    var dir = ch.file.substring(0, slash + 1);
+    $article.querySelectorAll('img[src]').forEach(function (img) {
+      var src = img.getAttribute('src');
+      // skip absolute URLs (https://, data:, etc.) and root-relative paths
+      if (/^(?:[a-z][a-z0-9+.-]*:|\/)/i.test(src)) return;
+      img.setAttribute('src', dir + src);
     });
   }
 
