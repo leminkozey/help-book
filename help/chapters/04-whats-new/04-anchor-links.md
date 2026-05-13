@@ -2,7 +2,7 @@
 
 Hover any H2 or H3 in this chapter and a `#` appears to the left of the heading. Click it to copy a deep link straight to that section.
 
-![Hover state of a heading anchor with copied link toast](images/heading-anchor.svg)
+![A chain — like the kind of link you copy from a heading anchor](images/anchors.jpg)
 
 ## How it looks
 
