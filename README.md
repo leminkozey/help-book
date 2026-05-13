@@ -28,6 +28,7 @@ Copy the `help/` folder into your project, edit `chapters.json`, write markdown 
 - Warm orange accent (`#e8791d`) — overridable per-project via `chapters.json`
 - Pill-shaped search and copy buttons; subtle 5%-opacity borders
 - Syntax highlighting (highlight.js) with copy-to-clipboard
+- Mermaid diagram support — ```` ```mermaid ```` code blocks render as SVG (lazy-loaded from CDN, theme-aware)
 - Previous / next chapter navigation
 - Mobile responsive with safe-area insets (iPhone notch aware)
 - Accessible: skip-link, ARIA combobox search, keyboard navigation, `prefers-reduced-motion`

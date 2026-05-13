@@ -1020,3 +1020,40 @@ body {
   .help-content { padding: 0; max-width: none; }
   .help-copy-btn { display: none; }
 }
+
+/* mermaid diagrams — centered card, theme-tinted background */
+.help-article .mermaid {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--help-card-bg);
+  border: 1px solid var(--help-border);
+  border-radius: var(--help-radius-lg);
+  padding: 24px 16px;
+  margin: 16px 0;
+  overflow-x: auto;
+  min-height: 80px;
+  color: var(--help-text-body);
+}
+
+.help-article .mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* hide pre-render text while mermaid bootstraps so the raw source doesn't flash */
+.help-article .mermaid:not([data-processed="true"]) {
+  color: transparent;
+  user-select: none;
+}
+
+.help-article .help-mermaid-error {
+  color: #b3261e;
+  font-family: var(--help-font-mono);
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+[data-theme="dark"] .help-article .help-mermaid-error {
+  color: #f2b8b5;
+}

@@ -293,6 +293,9 @@
       usedIds[h.id] = true;
     });
 
+    // extract mermaid code blocks before copy buttons attach — diagram doesn't need a copy btn
+    processMermaidBlocks();
+
     // click handler is delegated on $article, see initArticleDelegation
     var pres = $article.querySelectorAll('pre');
     pres.forEach(function (pre) {
@@ -314,6 +317,105 @@
       a.textContent = '#';
       h.insertBefore(a, h.firstChild);
     });
+  }
+
+  // mermaid integration — lazy-loaded from CDN only when needed
+  var mermaidPromise = null;
+
+  function currentMermaidTheme() {
+    return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default';
+  }
+
+  function loadMermaid() {
+    if (mermaidPromise) return mermaidPromise;
+    mermaidPromise = import('https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs')
+      .then(function (mod) {
+        var mermaid = mod.default;
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: currentMermaidTheme(),
+          securityLevel: 'strict',
+          fontFamily: 'inherit',
+        });
+        return mermaid;
+      })
+      .catch(function (err) {
+        // null the cache so later chapters can retry
+        mermaidPromise = null;
+        throw err;
+      });
+    return mermaidPromise;
+  }
+
+  function processMermaidBlocks() {
+    // hljs may add its own class — match both plain and highlighted variants
+    var codes = $article.querySelectorAll('pre > code.language-mermaid, pre > code.hljs.language-mermaid');
+    if (!codes.length) return;
+
+    var sources = [];
+    codes.forEach(function (code) {
+      var pre = code.parentElement;
+      // textContent strips any hljs spans, recovers the original mermaid source
+      var src = code.textContent;
+      var div = document.createElement('div');
+      div.className = 'mermaid';
+      div.dataset.mermaidSource = src;
+      div.textContent = src;
+      pre.replaceWith(div);
+      sources.push({ el: div, src: src });
+    });
+
+    loadMermaid()
+      .then(function (mermaid) {
+        return mermaid.run({ querySelector: '.mermaid' });
+      })
+      .catch(function (err) {
+        sources.forEach(function (s) {
+          if (!s.el.querySelector('svg')) renderMermaidFallback(s.el, s.src, err);
+        });
+      });
+  }
+
+  function renderMermaidFallback(el, src, err) {
+    var note = document.createElement('div');
+    note.className = 'help-mermaid-error';
+    note.textContent = 'Diagram failed to render: ' + (err && err.message ? err.message : 'unknown error');
+    var pre = document.createElement('pre');
+    var code = document.createElement('code');
+    code.className = 'language-mermaid';
+    code.textContent = src;
+    pre.appendChild(code);
+    el.innerHTML = '';
+    el.appendChild(note);
+    el.appendChild(pre);
+  }
+
+  function reRenderMermaid() {
+    if (!mermaidPromise) return;
+    var nodes = $article.querySelectorAll('.mermaid');
+    if (!nodes.length) return;
+    var sources = [];
+    nodes.forEach(function (el) {
+      var src = el.dataset.mermaidSource || el.textContent;
+      el.dataset.mermaidSource = src;
+      el.removeAttribute('data-processed');
+      el.innerHTML = '';
+      el.textContent = src;
+      sources.push({ el: el, src: src });
+    });
+    mermaidPromise
+      .then(function (mermaid) {
+        mermaid.initialize({
+          startOnLoad: false,
+          theme: currentMermaidTheme(),
+          securityLevel: 'strict',
+          fontFamily: 'inherit',
+        });
+        return mermaid.run({ querySelector: '.mermaid' });
+      })
+      .catch(function (err) {
+        sources.forEach(function (s) { renderMermaidFallback(s.el, s.src, err); });
+      });
   }
 
   function initArticleDelegation() {
@@ -671,6 +773,8 @@
     }
     setHljsTheme(dark);
     if ($theme) $theme.setAttribute('aria-pressed', dark ? 'true' : 'false');
+    // re-render any mermaid diagrams with the new theme — no-op if mermaid never loaded
+    reRenderMermaid();
   }
 
   function initTheme() {

@@ -99,6 +99,18 @@ If you need more control — sizing, alignment via wrapper, etc. — drop in a r
 
 DOMPurify sanitizes every rendered chapter, so only safe attributes survive on `<img>`: `src`, `alt`, `title`, `width`, `height`. Event handlers like `onerror` and unknown attributes get stripped — that's a feature, not a bug.
 
+## Diagrams
+
+You can embed [Mermaid](https://mermaid.js.org/) diagrams with a fenced code block tagged `mermaid`. The library is lazy-loaded from a CDN — chapters without diagrams never pay the cost.
+
+```mermaid
+graph TD
+  A[chapters.json] --> B[help.js]
+  B --> C[Markdown]
+  C --> D[Rendered Page]
+  C --> E[Search Index]
+```
+
 ## Requirements
 
 - A modern browser (Chrome, Firefox, Safari, Edge)
