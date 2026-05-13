@@ -194,9 +194,8 @@
         scrollSpyLocked = true;
         renderMarkdown(md);
         buildToc();
-        // prev/next zuerst, danach edit-link via $article.after() — so landet
-        // edit-link zwischen article und prev/next
         buildPrevNext();
+        // edit-link nach prev/next aufbauen — $article.after() schiebt ihn dann zwischen article und prev/next ein
         buildEditLink();
         window.scrollTo(0, 0);
         if ($main && typeof $main.focus === 'function') {
@@ -431,14 +430,13 @@
     var ch = chapters.find(function (c) { return c.id === currentId; });
     if (!ch || !ch.file) return;
 
-    // {file} platzhalter ersetzen
     var url = editUrlTemplate.replace(/\{file\}/g, encodeURI(ch.file));
 
     var a = document.createElement('a');
     a.className = 'help-edit-link';
     a.href = url;
     a.target = '_blank';
-    a.rel = 'noopener';
+    a.rel = 'noopener noreferrer';
     a.innerHTML =
       '<svg class="help-edit-link-icon" width="14" height="14" viewBox="0 0 24 24" ' +
       'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
