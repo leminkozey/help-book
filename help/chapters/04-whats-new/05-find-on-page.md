@@ -2,6 +2,8 @@
 
 The search box pulls double duty: typing two or more characters highlights matches **on this page** inline (like browser find) and lists hits in **other chapters** below.
 
+![Find popup with counter and prev/next nav](images/find-on-page.svg)
+
 ## Try it now
 
 1. Press `Ctrl+K` or `Cmd+K` to focus search
