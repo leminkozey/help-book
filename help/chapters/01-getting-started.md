@@ -1,6 +1,8 @@
-# Getting Started
+# Welcome
 
-Welcome to the Help Book — a standalone, drop-in documentation system for any web project.
+The Help Book is a standalone, drop-in documentation system for any web project. No build step, no npm, no framework — copy a folder, write Markdown, serve as static files.
+
+This demo doubles as a showcase: every chapter under **What's New** demonstrates one of the features added in the latest release.
 
 ## Installation
 
@@ -12,7 +14,7 @@ curl -fsSL https://raw.githubusercontent.com/leminkozey/help-book/main/scripts/i
 
 This drops a ready-to-edit `help/` folder in the current directory with a starter `chapters.json` plus one demo chapter.
 
-### Final layout
+## Final layout
 
 ```
 your-project/
@@ -59,80 +61,10 @@ Your `chapters.json` and everything under `chapters/` is **never touched**. Befo
 3. **help.js** loads the manifest, builds the sidebar, and renders markdown on the fly
 4. No build step, no dependencies to install — just static files
 
-## Quick Start
-
-1. Edit `chapters.json` to set your project name, version, and chapters
-2. Write your markdown files in `chapters/`
-3. Done
-
-> **Tip:** Use `Ctrl+K` / `Cmd+K` to quickly search across all chapters.
-
-## Adding Images
-
-Images use standard Markdown syntax — no special setup required:
-
-```markdown
-![A friendly placeholder](images/placeholder.svg)
-```
-
-Renders as:
-
-![A friendly placeholder](images/placeholder.svg)
-
-The suggested layout is an `images/` folder right next to your chapter files:
-
-```
-help/
-  chapters/
-    01-getting-started.md
-    images/
-      placeholder.svg
-```
-
-Paths are resolved relative to the chapter file, so the example above looks up `help/chapters/images/placeholder.svg`. External URLs (`https://...`) work too.
-
-If you need more control — sizing, alignment via wrapper, etc. — drop in a raw `<img>` tag:
-
-```html
-<img src="images/placeholder.svg" alt="Placeholder" width="200">
-```
-
-DOMPurify sanitizes every rendered chapter, so only safe attributes survive on `<img>`: `src`, `alt`, `title`, `width`, `height`. Event handlers like `onerror` and unknown attributes get stripped — that's a feature, not a bug.
-
-## Diagrams
-
-You can embed [Mermaid](https://mermaid.js.org/) diagrams with a fenced code block tagged `mermaid`. The library is lazy-loaded from a CDN — chapters without diagrams never pay the cost.
-
-```mermaid
-graph TD
-  A[chapters.json] --> B[help.js]
-  B --> C[Markdown]
-  C --> D[Rendered Page]
-  C --> E[Search Index]
-```
-
-## Charts
-
-Fenced code blocks tagged `chart` render as interactive [Chart.js](https://www.chartjs.org/) charts. The library is lazy-loaded from CDN only when a chart appears on the page.
-
-```chart
-{
-  "type": "bar",
-  "data": {
-    "labels": ["Jan", "Feb", "Mar", "Apr", "May"],
-    "datasets": [{
-      "label": "Downloads",
-      "data": [120, 180, 240, 310, 420],
-      "backgroundColor": "#e8791d"
-    }]
-  }
-}
-```
-
-Pass any valid Chart.js config as JSON. Charts adapt to the active theme on toggle.
+> **Tip:** Use `Ctrl+K` / `Cmd+K` to focus the search. Type two characters to start matching — see the **Find on Page** chapter for what happens next.
 
 ## Requirements
 
 - A modern browser (Chrome, Firefox, Safari, Edge)
 - A web server that can serve static files
-- That's it. No npm, no webpack, no build pipeline.
+- That's it.

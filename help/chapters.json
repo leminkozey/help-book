@@ -1,13 +1,49 @@
 {
   "title": "Help Book Demo",
-  "version": "v2.4.0",
+  "version": "v2.5.0-dev",
   "accent": "#e8791d",
   "editUrl": "https://github.com/leminkozey/help-book/edit/main/help/{file}",
   "chapters": [
     {
       "id": "getting-started",
-      "title": "Getting Started",
+      "title": "Welcome",
       "file": "chapters/01-getting-started.md"
+    },
+    {
+      "id": "whats-new",
+      "title": "What's New",
+      "children": [
+        {
+          "id": "images",
+          "title": "Images",
+          "file": "chapters/04-whats-new/01-images.md"
+        },
+        {
+          "id": "diagrams",
+          "title": "Diagrams (Mermaid)",
+          "file": "chapters/04-whats-new/02-diagrams.md"
+        },
+        {
+          "id": "charts",
+          "title": "Charts (Chart.js)",
+          "file": "chapters/04-whats-new/03-charts.md"
+        },
+        {
+          "id": "anchors",
+          "title": "Heading Anchors",
+          "file": "chapters/04-whats-new/04-anchor-links.md"
+        },
+        {
+          "id": "find-on-page",
+          "title": "Find on Page",
+          "file": "chapters/04-whats-new/05-find-on-page.md"
+        },
+        {
+          "id": "edit-on-github",
+          "title": "Edit on GitHub",
+          "file": "chapters/04-whats-new/06-edit-on-github.md"
+        }
+      ]
     },
     {
       "id": "configuration",
@@ -16,16 +52,16 @@
     },
     {
       "id": "features",
-      "title": "Features",
+      "title": "Markdown Reference",
       "children": [
         {
           "id": "dashboard",
-          "title": "Dashboard",
+          "title": "Formatting Showcase",
           "file": "chapters/03-features/01-dashboard.md"
         },
         {
           "id": "settings",
-          "title": "Settings",
+          "title": "Theming & Settings",
           "file": "chapters/03-features/02-settings.md"
         }
       ]
